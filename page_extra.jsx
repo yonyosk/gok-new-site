@@ -90,4 +90,63 @@ function ContactPage({ onNav }) {
   );
 }
 
-Object.assign(window, { PesachPage, ContactPage });
+// ---- WhatsApp groups ----
+function WhatsappPage({ onNav }) {
+  const { t, lang } = useLang();
+  const w = t.whatsapp;
+  return (
+    <React.Fragment>
+      <PageHead eyebrow={w.eyebrow} title={w.title} lead={w.lead} />
+      <section className="section">
+        <div className="wrap">
+          <div className="wa-grid">
+            {w.groups.map(([name, desc], i) => (
+              <div className="wa-card" key={i}>
+                <div className="wa-ic">{Icons.whatsapp}</div>
+                <div className="wa-body">
+                  <h3>{name}</h3>
+                  <p>{desc}</p>
+                </div>
+                <a className="wa-join btn btn-primary btn-sm"
+                   href="https://chat.whatsapp.com/" target="_blank" rel="noopener noreferrer">
+                  {w.joinBtn}
+                </a>
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize: 13, color: "var(--gok-ink-3)", marginTop: 24, textAlign: "center" }}>{w.note}</p>
+        </div>
+      </section>
+    </React.Fragment>
+  );
+}
+
+// ---- FAQ standalone page ----
+function FaqPage({ onNav }) {
+  const { t, lang } = useLang();
+  const f = t.faqPage;
+  const items = HOME_FAQ[lang];
+  const [open, setOpen] = useExtraState(0);
+  return (
+    <React.Fragment>
+      <PageHead eyebrow={f.eyebrow} title={f.title} lead={f.lead} />
+      <section className="section">
+        <div className="wrap">
+          <div className="faq-list" style={{ marginTop: 0 }}>
+            {items.map(([q, a], i) => (
+              <div className={"faq-item" + (open === i ? " open" : "")} key={i}>
+                <button className="faq-q" onClick={() => setOpen(open === i ? -1 : i)}>
+                  {q}
+                  <span className="faq-chev">{Icons.chevD}</span>
+                </button>
+                <div className="faq-a"><p>{a}</p></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </React.Fragment>
+  );
+}
+
+Object.assign(window, { PesachPage, ContactPage, WhatsappPage, FaqPage });

@@ -11,14 +11,48 @@ function LangToggle({ compact }) {
   );
 }
 
+// desktop dropdown for the "guide & info" group
+function NavDropdown({ label, items, route, go }) {
+  const [open, setOpen] = useChromeState(false);
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+  const active = items.some(([r]) => r === route);
+  return (
+    <div className={"nav-dd" + (open ? " open" : "")} ref={ref}
+         onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <button className={"nav-dd-trigger" + (active ? " active" : "")}
+              onClick={() => setOpen((o) => !o)}>
+        {label}{Icons.chevD}
+      </button>
+      <div className="nav-dd-menu" role="menu">
+        {items.map(([r, l]) => (
+          <a key={r} href="#" role="menuitem" className={r === route ? "on" : ""}
+             onClick={(e) => { e.preventDefault(); go(r); setOpen(false); }}>{l}</a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Header({ route, onNav }) {
   const { t } = useLang();
   const [open, setOpen] = useChromeState(false);
-  const items = [
-    ["home", t.nav.home], ["zekasher", t.nav.zekasher], ["guide", t.nav.guide],
-    ["pesach", t.nav.pesach], ["utensils", t.nav.utensils], ["about", t.nav.about], ["support", t.nav.support], ["contact", t.nav.contact],
+  const [guideOpen, setGuideOpen] = useChromeState(false);
+  const guideItems = [
+    ["whatsapp", t.nav.whatsapp],
+    ["guide", t.nav.infoGeneral],
+    ["faq", t.nav.faq],
+    ["utensils", t.nav.utensils],
+    ["pesach", t.nav.pesach],
   ];
-  const go = (r) => { onNav(r); setOpen(false); };
+  const mainItems = [["home", t.nav.home], ["zekasher", t.nav.zekasher]];
+  const tailItems = [["about", t.nav.about], ["support", t.nav.support], ["contact", t.nav.contact]];
+  const go = (r) => { onNav(r); setOpen(false); setGuideOpen(false); };
+  const guideActive = guideItems.some(([r]) => r === route);
   return (
     <header className="hdr">
       <div className="wrap hdr-in">
@@ -30,25 +64,46 @@ function Header({ route, onNav }) {
           <span className="brand-name"><b>{t.brand.name}</b><span>{t.brand.short}</span></span>
         </a>
         <nav className="nav">
-          {items.map(([r, label]) => (
+          {mainItems.map(([r, label]) => (
+            <a key={r} href="#" className={r === route ? "active" : ""}
+               onClick={(e) => { e.preventDefault(); go(r); }}>{label}</a>
+          ))}
+          <NavDropdown label={t.nav.guide} items={guideItems} route={route} go={go} />
+          {tailItems.map(([r, label]) => (
             <a key={r} href="#" className={r === route ? "active" : ""}
                onClick={(e) => { e.preventDefault(); go(r); }}>{label}</a>
           ))}
         </nav>
         <div className="hdr-end">
+          <AccountButton />
           <LangToggle />
           <Button kind="primary" sm className="hdr-cta" icon={Icons.search}
                   onClick={() => go("zekasher")}>{t.cta.search}</Button>
         </div>
       </div>
       <div className={"mobile-nav" + (open ? " open" : "")}>
-        {items.map(([r, label]) => (
+        {mainItems.map(([r, label]) => (
+          <a key={r} href="#" className={r === route ? "active" : ""}
+             onClick={(e) => { e.preventDefault(); go(r); }}>{label}{Icons.chevL}</a>
+        ))}
+        <button className={"mnav-group-trigger" + (guideActive ? " active" : "") + (guideOpen ? " open" : "")}
+                onClick={() => setGuideOpen((g) => !g)}>
+          {t.nav.guide}
+          <span className="mnav-chev">{Icons.chevD}</span>
+        </button>
+        <div className={"mnav-sub" + (guideOpen ? " open" : "")}>
+          {guideItems.map(([r, label]) => (
+            <a key={r} href="#" className={r === route ? "active" : ""}
+               onClick={(e) => { e.preventDefault(); go(r); }}>{label}{Icons.chevL}</a>
+          ))}
+        </div>
+        {tailItems.map(([r, label]) => (
           <a key={r} href="#" className={r === route ? "active" : ""}
              onClick={(e) => { e.preventDefault(); go(r); }}>{label}{Icons.chevL}</a>
         ))}
         <div className="mobile-nav-foot">
+          <AccountButton compact />
           <LangToggle />
-          <Button kind="lime" sm icon={Icons.search} onClick={() => go("zekasher")}>{t.cta.search}</Button>
         </div>
       </div>
     </header>
@@ -92,4 +147,4 @@ function Footer({ onNav }) {
   );
 }
 
-Object.assign(window, { Header, Footer, LangToggle });
+Object.assign(window, { Header, Footer, LangToggle, NavDropdown });

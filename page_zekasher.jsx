@@ -121,7 +121,13 @@ function FilterSheet({ open, onClose, country, setCountry, kosher, setKosher, ca
   );
 }
 
-function ZeKasherPage({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
+function ZeKasherPage(props) {
+  const { user } = useAuth();
+  if (!user) return <ZeKasherGuest onNav={props.onNav} />;
+  return <ZeKasherFull {...props} />;
+}
+
+function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
   const { t, lang } = useLang();
   const [q, setQ] = useZkState(initialQuery || "");
   const [country, setCountry] = useZkState("all");
@@ -242,6 +248,169 @@ function ZeKasherPage({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
   );
 }
 
+// ---- Guest (unregistered) view: barcode-only lookup + image scan ----
+function ZeKasherGuest({ onNav }) {
+  const { t, lang } = useLang();
+  const { openAuth } = useAuth();
+  const z = t.zekasher;
+  const [code, setCode] = useZkState("");
+  const [searched, setSearched] = useZkState(false);
+  const [loading, setLoading] = useZkState(false);
+  const [results, setResults] = useZkState([]);
+  const [scanning, setScanning] = useZkState(false);
+  const [scanMsg, setScanMsg] = useZkState("");
+  const fileRef = useZkRef(null);
+
+  const lookup = (codeArg) => {
+    const c = String(codeArg != null ? codeArg : code).trim();
+    if (!c) { setSearched(false); return; }
+    const digits = c.replace(/\D/g, "");
+    setSearched(true);
+    setLoading(true);
+    setScanMsg("");
+    searchProducts({ q: c }, lang).then((r) => {
+      const matches = r.items.filter((p) => {
+        const b = String(p.barcode);
+        return b === c || (digits && b.includes(digits));
+      });
+      setResults(matches);
+      setLoading(false);
+    });
+  };
+
+  const pickImage = () => { if (fileRef.current) fileRef.current.click(); };
+  const onFile = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!("BarcodeDetector" in window)) { setScanMsg(z.scanUnsupported); return; }
+    setScanning(true);
+    setScanMsg("");
+    try {
+      let formats;
+      try { formats = await window.BarcodeDetector.getSupportedFormats(); } catch (_) {}
+      const detector = new window.BarcodeDetector(
+        formats && formats.length ? { formats } : undefined);
+      const bmp = await createImageBitmap(file);
+      const codes = await detector.detect(bmp);
+      if (bmp.close) bmp.close();
+      if (codes && codes.length) {
+        const val = codes[0].rawValue;
+        setCode(val);
+        lookup(val);
+      } else {
+        setScanMsg(z.scanNotFound);
+        setSearched(false);
+      }
+    } catch (err) {
+      setScanMsg(z.scanNotFound);
+      setSearched(false);
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  return (
+    <React.Fragment>
+      <section className="zk-hero">
+        <div className="hero-lozenge" />
+        <div className="wrap">
+          <Eyebrow onDark>{z.eyebrow}</Eyebrow>
+          <h1>{z.title}</h1>
+          <p>{z.guestSub}</p>
+        </div>
+      </section>
+
+      <section className="wrap zk-results">
+        <div className="zk-guest">
+          <div className="zk-guest-card">
+            <div className="zk-guest-head">
+              <span className="zk-guest-ic">{Icons.barcode}</span>
+              <h2>{z.guestSearchTitle}</h2>
+            </div>
+
+            <div className="zk-guest-search">
+              <span className="zk-guest-bc">{Icons.barcode}</span>
+              <input value={code} inputMode="numeric" dir="ltr"
+                     placeholder={z.barcodePlaceholder}
+                     onChange={(e) => setCode(e.target.value)}
+                     onKeyDown={(e) => { if (e.key === "Enter") lookup(); }} />
+              <Button kind="primary" sm onClick={() => lookup()}>{z.lookupBtn}</Button>
+            </div>
+
+            <div className="zk-guest-or"><span>—</span></div>
+
+            <button className="zk-scan-btn" onClick={pickImage} disabled={scanning}>
+              <span className="zk-scan-ic">{scanning ? <span className="zk-spinner" /> : Icons.camera}</span>
+              <span className="zk-scan-txt">
+                <b>{scanning ? z.scanning : z.scanImage}</b>
+                <span>{z.scanHint}</span>
+              </span>
+            </button>
+            <input ref={fileRef} type="file" accept="image/*" capture="environment"
+                   style={{ display: "none" }} onChange={onFile} />
+            {scanMsg && <div className="zk-scan-msg">{Icons.info}{scanMsg}</div>}
+          </div>
+
+          {/* results / states */}
+          <div className="zk-guest-res">
+            {!searched ? (
+              <div className="zk-guest-empty"><span className="ic">{Icons.search}</span>{z.noBarcode}</div>
+            ) : loading ? (
+              <div className="zk-loading"><span className="zk-spinner" />{lang === "he" ? "מחפש…" : "Searching…"}</div>
+            ) : results.length === 0 ? (
+              <div className="zk-empty">
+                <div className="ic">{Icons.search}</div>
+                <h3>{z.empty}</h3>
+                <p>{z.emptySub}</p>
+              </div>
+            ) : (
+              <React.Fragment>
+                <div className="zk-results-head">
+                  <h2>{z.guestFound} <span style={{ color: "var(--gok-green)" }}>({results.length})</span></h2>
+                </div>
+                <div className="zk-grid">
+                  {results.map((p) => <ProductCard key={p.id} p={p} />)}
+                </div>
+              </React.Fragment>
+            )}
+          </div>
+
+          {/* locked-database register prompt */}
+          <div className="zk-locked">
+            <span className="zk-locked-ic">{Icons.lock}</span>
+            <div className="zk-locked-copy">
+              <b>{z.guestTitle}</b>
+              <span>{z.lockedFull}</span>
+            </div>
+            <Button kind="lime" icon={Icons.user} onClick={openAuth}>{z.registerCta}</Button>
+          </div>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="wrap">
+          <div className="zk-phone-promo">
+            <div className="dots" />
+            <div className="zk-phone-in">
+              <PhoneMock />
+              <div className="zk-phone-copy">
+                <Eyebrow onDark tone="lime">{z.tryPhone}</Eyebrow>
+                <h2>ZeKasher</h2>
+                <p>{z.phoneNote}</p>
+                <div className="store-row">
+                  <Button kind="lime" icon={Icons.arrow}>App Store</Button>
+                  <Button kind="ghost-light" icon={Icons.arrow}>Google Play</Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </React.Fragment>
+  );
+}
+
 // ---- Phone mockup (mirrors the ZeKasher app design) ----
 function PhoneMock({ compact }) {
   const { t, lang } = useLang();
@@ -281,4 +450,4 @@ function PhoneMock({ compact }) {
   );
 }
 
-Object.assign(window, { ZeKasherPage, ProductCard, PhoneMock, FilterSheet, CatGlyph });
+Object.assign(window, { ZeKasherPage, ZeKasherFull, ZeKasherGuest, ProductCard, PhoneMock, FilterSheet, CatGlyph });

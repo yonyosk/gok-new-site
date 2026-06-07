@@ -44,6 +44,8 @@ function Router() {
   else if (route === "support") page = <SupportPage onNav={onNav} />;
   else if (route === "utensils") page = <UtensilsPage onNav={onNav} />;
   else if (route === "pesach") page = <PesachPage onNav={onNav} />;
+  else if (route === "whatsapp") page = <WhatsappPage onNav={onNav} />;
+  else if (route === "faq") page = <FaqPage onNav={onNav} />;
   else if (route === "contact") page = <ContactPage onNav={onNav} />;
   else page = t.homeVersion === "classic"
     ? <ClassicHomePage onNav={onNav} />
@@ -57,6 +59,7 @@ function Router() {
       <Header route={route} onNav={onNav} />
       <main className="app-main" key={pageKey}>{page}</main>
       <Footer onNav={onNav} />
+      <AuthModal />
     </React.Fragment>
   );
 
@@ -120,7 +123,9 @@ function DevicePreview({ mode, accent, lang }) {
 function App() {
   return (
     <LangProvider>
-      <Router />
+      <AuthProvider>
+        <Router />
+      </AuthProvider>
     </LangProvider>
   );
 }
