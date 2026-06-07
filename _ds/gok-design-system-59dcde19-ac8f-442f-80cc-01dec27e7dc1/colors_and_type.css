@@ -1,0 +1,117 @@
+/* ============================================================
+   GOK — Global Orthodox Kosher  ·  Core tokens: color + type
+   "ארגון הכשרות העולמי" — World Kosher Organization
+   Hebrew-first / RTL brand.
+   Import this file (it re-exports the raw Figma variables too).
+   ============================================================ */
+
+/* Assistant is self-hosted from uploaded static weights; League Spartan stays on CDN. */
+@import url('https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700;800&display=swap');
+@import './fig-tokens.css';   /* raw Figma Variables, namespaced --color-* etc. */
+
+@font-face { font-family:'Assistant'; src:url('./fonts/Assistant-ExtraLight.ttf') format('truetype'); font-weight:200; font-style:normal; font-display:swap; }
+@font-face { font-family:'Assistant'; src:url('./fonts/Assistant-Light.ttf') format('truetype');      font-weight:300; font-style:normal; font-display:swap; }
+@font-face { font-family:'Assistant'; src:url('./fonts/Assistant-Regular.ttf') format('truetype');    font-weight:400; font-style:normal; font-display:swap; }
+@font-face { font-family:'Assistant'; src:url('./fonts/Assistant-Medium.ttf') format('truetype');     font-weight:500; font-style:normal; font-display:swap; }
+@font-face { font-family:'Assistant'; src:url('./fonts/Assistant-SemiBold.ttf') format('truetype');   font-weight:600; font-style:normal; font-display:swap; }
+@font-face { font-family:'Assistant'; src:url('./fonts/Assistant-Bold.ttf') format('truetype');       font-weight:700; font-style:normal; font-display:swap; }
+@font-face { font-family:'Assistant'; src:url('./fonts/Assistant-ExtraBold.ttf') format('truetype');  font-weight:800; font-style:normal; font-display:swap; }
+
+:root {
+  /* ---- Brand core ---------------------------------------- */
+  --gok-green:      #234F47;   /* PRIMARY · deep pine green — the signature */
+  --gok-green-700:  #1A3B35;   /* darker pressed/shade */
+  --gok-green-900:  #0F2430;   /* near-black green (deep surfaces) */
+  --gok-lime:       #C8FE94;   /* SECONDARY · bright pistachio — energy/accent */
+  --gok-lime-soft:  #E4FBC9;   /* lime tint for fills */
+
+  /* ---- Neutrals ------------------------------------------ */
+  --gok-ink:        #262626;   /* primary text / dark surface */
+  --gok-ink-2:      #5A5A5A;   /* secondary text */
+  --gok-ink-3:      #8F8FA7;   /* muted/meta text */
+  --gok-mist:       #EDF1F0;   /* secondary light · cool pale green-grey */
+  --gok-mist-2:     #F5F7F7;   /* lighter mist */
+  --gok-line:       #E3E3E3;   /* hairline borders */
+  --gok-white:      #FFFFFF;
+  --gok-bg:         #FAFAFA;   /* page background */
+  --gok-bg-2:       #F4F4F6;
+
+  /* ---- Extended accents (use sparingly) ------------------ */
+  --gok-blue:       #001B59;   /* certification navy */
+  --gok-cream:      #FFF5E5;   /* warm paper */
+  --gok-gold:       #BE914D;   /* premium accent */
+
+  /* ---- Semantic ------------------------------------------ */
+  --gok-success:    #4AAE20;
+  --gok-danger:     #A62122;
+  --gok-danger-2:   #F12626;
+  --gok-warning:    #BE914D;
+  --gok-info:       #2641F1;
+
+  /* ---- Type families ------------------------------------- */
+  --font-sans:    'Assistant', system-ui, 'Segoe UI', sans-serif;        /* Hebrew + Latin body/UI */
+  --font-display: 'League Spartan', var(--font-sans);                    /* all-caps Latin display/labels */
+
+  /* ---- Weights ------------------------------------------- */
+  --w-light: 300; --w-regular: 400; --w-medium: 500;
+  --w-semibold: 600; --w-bold: 700; --w-extrabold: 800;
+
+  /* ---- Type scale (px, 1920 canvas baseline) ------------- */
+  --fs-display: 128px;  /* hero / cover */
+  --fs-h1: 88px;
+  --fs-h2: 56px;
+  --fs-h3: 36px;
+  --fs-h4: 24px;        /* subtle headings / meta */
+  --fs-quote: 24px;
+  --fs-body: 18px;
+  --fs-body-sm: 16px;
+  --fs-caption: 14px;
+  --fs-button: 18px;
+  --fs-label: 13px;     /* League Spartan all-caps eyebrow */
+
+  /* ---- Radii (rounded, pill-forward brand) --------------- */
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 24px;     /* cards */
+  --r-xl: 32px;
+  --r-pill: 999px;
+
+  /* ---- Spacing (8pt) ------------------------------------- */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px;
+
+  /* ---- Elevation ----------------------------------------- */
+  --shadow-sm: 0 1px 2px rgba(15,36,48,.06), 0 1px 1px rgba(15,36,48,.04);
+  --shadow-md: 0 8px 24px rgba(15,36,48,.08);
+  --shadow-lg: 0 24px 60px rgba(15,36,48,.12);
+  --shadow-green: 0 16px 40px rgba(35,79,71,.22);
+
+  /* ---- Motion -------------------------------------------- */
+  --ease: cubic-bezier(.2,.7,.3,1);
+  --dur: 220ms;
+}
+
+/* ============================================================
+   Semantic type roles — apply with class or @extend in components.
+   Hebrew content is RTL; Latin/display is LTR all-caps.
+   ============================================================ */
+.gok-display { font-family: var(--font-sans); font-weight: var(--w-bold);
+  font-size: var(--fs-display); line-height: 1; letter-spacing: -.02em; }
+.gok-h1 { font-family: var(--font-sans); font-weight: var(--w-bold);
+  font-size: var(--fs-h1); line-height: 1.05; letter-spacing: -.02em; }
+.gok-h2 { font-family: var(--font-sans); font-weight: var(--w-bold);
+  font-size: var(--fs-h2); line-height: 1.1; letter-spacing: -.015em; }
+.gok-h3 { font-family: var(--font-sans); font-weight: var(--w-semibold);
+  font-size: var(--fs-h3); line-height: 1.2; }
+.gok-h4 { font-family: var(--font-sans); font-weight: var(--w-semibold);
+  font-size: var(--fs-h4); line-height: 1.3; }
+.gok-quote { font-family: var(--font-sans); font-weight: var(--w-medium);
+  font-size: var(--fs-quote); line-height: 1.5; }
+.gok-body { font-family: var(--font-sans); font-weight: var(--w-regular);
+  font-size: var(--fs-body); line-height: 1.6; color: var(--gok-ink); }
+.gok-button { font-family: var(--font-sans); font-weight: var(--w-semibold);
+  font-size: var(--fs-button); line-height: 1; }
+/* League Spartan all-caps eyebrow / data label */
+.gok-label { font-family: var(--font-display); font-weight: var(--w-bold);
+  font-size: var(--fs-label); line-height: 1.4; letter-spacing: .08em;
+  text-transform: uppercase; }
