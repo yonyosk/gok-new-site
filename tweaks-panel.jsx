@@ -264,7 +264,41 @@ function TweaksPanel({ title = 'Tweaks', children }) {
     window.addEventListener('mouseup', up);
   };
 
-  if (!open) return null;
+  // Keyboard shortcut: T (when no input is focused) toggles the panel.
+  React.useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== 't' && e.key !== 'T') return;
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      setOpen((o) => !o);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const toggleStyle = `
+    .twk-fab{position:fixed;right:16px;bottom:16px;z-index:2147483645;
+      display:flex;align-items:center;gap:7px;
+      background:#234F47;color:#C8FE94;
+      border:none;border-radius:999px;padding:10px 18px 10px 14px;
+      font:600 13px/1 ui-sans-serif,system-ui,-apple-system,sans-serif;
+      letter-spacing:.01em;cursor:pointer;
+      box-shadow:0 4px 18px rgba(35,79,71,.35);
+      transition:background .18s,transform .12s}
+    .twk-fab:hover{background:#1A3B35;transform:translateY(-1px)}
+    .twk-fab:active{transform:scale(.97)}
+    .twk-fab-spk{font-size:16px;line-height:1}
+  `;
+
+  if (!open) return (
+    <>
+      <style>{toggleStyle}</style>
+      <button className="twk-fab" onClick={() => setOpen(true)} title="Open Tweaks (or press T)">
+        <span className="twk-fab-spk">✦</span> Tweaks
+      </button>
+    </>
+  );
+
   return (
     <>
       <style>{__TWEAKS_STYLE}</style>
