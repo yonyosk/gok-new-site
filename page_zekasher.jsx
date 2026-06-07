@@ -109,11 +109,13 @@ function FilterSheet({ open, onClose, country, setCountry, kosher, setKosher, ca
             </div>
           </div>
           <div className="fgroup">
-            <h4>{t.zekasher.cats.all}</h4>
+            <h4>{t.zekasher.catLabel}</h4>
             <div className="fopts">
-              {["all", "dairy", "meat", "bakery", "snacks", "drinks", "pantry"].map((c) => (
-                <button key={c} className={"fopt" + (cat === c ? " on" : "")}
-                        onClick={() => setCat(c)}>{t.zekasher.cats[c]}</button>
+              <button className={"fopt" + (cat === "all" ? " on" : "")}
+                      onClick={() => setCat("all")}>{t.zekasher.cats.all}</button>
+              {CATEGORIES.map((c) => (
+                <button key={c.id} className={"fopt" + (cat === c.id ? " on" : "")}
+                        onClick={() => setCat(c.id)}>{c.icon} {lang === "he" ? c.he : c.en}</button>
               ))}
             </div>
           </div>

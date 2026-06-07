@@ -30,7 +30,7 @@ function ContactPage({ onNav }) {
   const [errs, setErrs] = useExtraState({});
   const [done, setDone] = useExtraState(false);
   const set = (k, v) => setVals((s) => ({ ...s, [k]: v }));
-  const infoIcons = [Icons.send, Icons.chat, Icons.map, Icons.clock];
+  const infoIcons = [Icons.send, Icons.chat, Icons.clock];
 
   const submit = () => {
     const e = {};
@@ -100,7 +100,7 @@ function WhatsappPage({ onNav }) {
       <section className="section">
         <div className="wrap">
           <div className="wa-grid">
-            {w.groups.map(([name, desc], i) => (
+            {w.groups.map(([name, desc, url], i) => (
               <div className="wa-card" key={i}>
                 <div className="wa-ic">{Icons.whatsapp}</div>
                 <div className="wa-body">
@@ -108,13 +108,12 @@ function WhatsappPage({ onNav }) {
                   <p>{desc}</p>
                 </div>
                 <a className="wa-join btn btn-primary btn-sm"
-                   href="https://chat.whatsapp.com/" target="_blank" rel="noopener noreferrer">
+                   href={url} target="_blank" rel="noopener noreferrer">
                   {w.joinBtn}
                 </a>
               </div>
             ))}
           </div>
-          <p style={{ fontSize: 13, color: "var(--gok-ink-3)", marginTop: 24, textAlign: "center" }}>{w.note}</p>
         </div>
       </section>
     </React.Fragment>
