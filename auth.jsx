@@ -280,14 +280,12 @@ function AuthModal() {
                         onClick={submitSignin} disabled={loading}>
                   {loading ? "…" : a.signinBtn}
                 </Button>
-                <button className="auth-demo-btn" disabled={loading} onClick={async () => {
-                  setLoading(true);
-                  const result = await signin(DEMO);
-                  setLoading(false);
-                  if (result.error) setSigninErr(a[result.error] || a.apiError);
-                  else closeAuth();
+                <button className="auth-demo-btn" onClick={() => {
+                  setSi("email", DEMO.email);
+                  setSi("password", DEMO.password);
+                  setSigninErr("");
                 }}>
-                  {lang === "he" ? "כניסה עם חשבון הדגמה" : "Sign in as demo user"}
+                  {lang === "he" ? "מילוי חשבון הדגמה" : "Fill demo account"}
                 </button>
                 <p className="auth-switch">
                   {a.noAccount}{" "}
