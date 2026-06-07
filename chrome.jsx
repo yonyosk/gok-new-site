@@ -4,9 +4,9 @@ const { useState: useChromeState } = React;
 function LangToggle({ compact }) {
   const { lang, setLang } = useLang();
   return (
-    <div className={"lang-toggle" + (compact ? " compact" : "")}>
-      <button className={lang === "he" ? "on" : ""} onClick={() => setLang("he")}>עב</button>
-      <button className={lang === "en" ? "on" : ""} onClick={() => setLang("en")}>EN</button>
+    <div className={"lang-toggle" + (compact ? " compact" : "")} role="group" aria-label="שפה / Language">
+      <button className={lang === "he" ? "on" : ""} aria-pressed={lang === "he"} onClick={() => setLang("he")}>עב</button>
+      <button className={lang === "en" ? "on" : ""} aria-pressed={lang === "en"} onClick={() => setLang("en")}>EN</button>
     </div>
   );
 }
@@ -27,6 +27,7 @@ function NavDropdown({ label, items, route, go }) {
          onMouseEnter={() => { clearTimeout(closeTimer.current); setOpen(true); }}
          onMouseLeave={() => { closeTimer.current = setTimeout(() => setOpen(false), 120); }}>
       <button className={"nav-dd-trigger" + (active ? " active" : "")}
+              aria-expanded={open} aria-haspopup="true"
               onClick={() => setOpen((o) => !o)}>
         {label}{Icons.chevD}
       </button>
@@ -58,7 +59,7 @@ function Header({ route, onNav }) {
   return (
     <header className="hdr">
       <div className="wrap hdr-in">
-        <button className="hdr-burger" aria-label="menu" onClick={() => setOpen((o) => !o)}>
+        <button className="hdr-burger" aria-label={open ? "סגירת תפריט" : "פתיחת תפריט"} aria-expanded={open} aria-controls="mobile-nav" onClick={() => setOpen((o) => !o)}>
           {open ? Icons.x : Icons.menu}
         </button>
         <a className="brand" href="#" onClick={(e) => { e.preventDefault(); go("home"); }}>
@@ -83,17 +84,18 @@ function Header({ route, onNav }) {
                   onClick={() => go("zekasher")}>{t.cta.search}</Button>
         </div>
       </div>
-      <div className={"mobile-nav" + (open ? " open" : "")}>
+      <div className={"mobile-nav" + (open ? " open" : "")} id="mobile-nav">
         {mainItems.map(([r, label]) => (
           <a key={r} href="#" className={r === route ? "active" : ""}
              onClick={(e) => { e.preventDefault(); go(r); }}>{label}{Icons.chevL}</a>
         ))}
         <button className={"mnav-group-trigger" + (guideActive ? " active" : "") + (guideOpen ? " open" : "")}
+                aria-expanded={guideOpen} aria-controls="mnav-guide-sub"
                 onClick={() => setGuideOpen((g) => !g)}>
           {t.nav.guide}
           <span className="mnav-chev">{Icons.chevD}</span>
         </button>
-        <div className={"mnav-sub" + (guideOpen ? " open" : "")}>
+        <div className={"mnav-sub" + (guideOpen ? " open" : "")} id="mnav-guide-sub">
           {guideItems.map(([r, label]) => (
             <a key={r} href="#" className={r === route ? "active" : ""}
                onClick={(e) => { e.preventDefault(); go(r); }}>{label}{Icons.chevL}</a>

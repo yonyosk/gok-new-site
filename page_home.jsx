@@ -203,7 +203,9 @@ function Updates({ onNav }) {
         </div>
         <div className="up-rail">
           {items.map((u, i) => (
-            <article className="up-card" key={u.title} onClick={() => onNav("article", { id: ARTICLES[i % ARTICLES.length].id })}>
+            <article className="up-card" key={u.title} role="button" tabIndex={0}
+                     onClick={() => onNav("article", { id: ARTICLES[i % ARTICLES.length].id })}
+                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onNav("article", { id: ARTICLES[i % ARTICLES.length].id }); } }}>
               <div className="up-media" style={{ background: GUIDE_TONES[i % GUIDE_TONES.length] }}>
                 <Sparkle tone="lime" className="up-spk" />
                 <span className="up-tag">{u.tag}</span>
@@ -272,11 +274,12 @@ function FAQ({ onNav }) {
         <div className="faq-list">
           {items.map(([q, a], i) => (
             <div className={"faq-item" + (open === i ? " open" : "")} key={q}>
-              <button className="faq-q" onClick={() => setOpen(open === i ? -1 : i)}>
+              <button className="faq-q" aria-expanded={open === i} aria-controls={"faq-body-home-" + i}
+                      onClick={() => setOpen(open === i ? -1 : i)}>
                 <span className="faq-chev">{Icons.chevD}</span>
                 <span>{q}</span>
               </button>
-              <div className="faq-a"><p>{a}</p></div>
+              <div className="faq-a" id={"faq-body-home-" + i} role="region"><p>{a}</p></div>
             </div>
           ))}
         </div>

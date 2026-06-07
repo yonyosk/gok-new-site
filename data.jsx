@@ -352,12 +352,8 @@ async function searchProducts(params = {}, lang = "he") {
     return { items: (json.items || []).map(mapApiProduct), total: json.total || 0, hasMore: json.has_more || false };
   } catch (err) {
     console.warn("[ZeKasher] search API failed, using sample data:", err);
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const items = PRODUCTS.filter((p) => matchProduct(p, params, lang));
-        resolve({ items, total: items.length, hasMore: false });
-      }, 260);
-    });
+    const items = PRODUCTS.filter((p) => matchProduct(p, params, lang));
+    return { items, total: items.length, hasMore: false };
   }
 }
 
@@ -425,8 +421,6 @@ const ARTICLE_BODY = {
   ],
 };
 
-Object.assign(window, { COUNTRIES, CATEGORIES, countryByCode, PRODUCTS, searchProducts, ARTICLES, ARTICLE_BODY });
-
 // ---- Home page placeholder content (bilingual) ----
 const HOME_UPDATES = {
   he: [
@@ -479,4 +473,4 @@ const HOME_FAQ = {
   ],
 };
 
-Object.assign(window, { HOME_UPDATES, HOME_QA, HOME_FAQ });
+Object.assign(window, { COUNTRIES, CATEGORIES, countryByCode, PRODUCTS, searchProducts, ARTICLES, ARTICLE_BODY, HOME_UPDATES, HOME_QA, HOME_FAQ });

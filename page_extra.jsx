@@ -15,6 +15,7 @@ function PesachPage({ onNav }) {
         src="https://pesach-gok.lovable.app"
         className={"iframe-full" + (loaded ? " loaded" : "")}
         title="הלכות פסח — GOK"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
         onLoad={() => setLoaded(true)}
       />
     </div>
@@ -100,8 +101,8 @@ function WhatsappPage({ onNav }) {
       <section className="section">
         <div className="wrap">
           <div className="wa-grid">
-            {w.groups.map(([name, desc, url], i) => (
-              <div className="wa-card" key={i}>
+            {w.groups.map(([name, desc, url]) => (
+              <div className="wa-card" key={url}>
                 <div className="wa-ic">{Icons.whatsapp}</div>
                 <div className="wa-body">
                   <h3>{name}</h3>
@@ -133,12 +134,13 @@ function FaqPage({ onNav }) {
         <div className="wrap">
           <div className="faq-list" style={{ marginTop: 0 }}>
             {items.map(([q, a], i) => (
-              <div className={"faq-item" + (open === i ? " open" : "")} key={i}>
-                <button className="faq-q" onClick={() => setOpen(open === i ? -1 : i)}>
+              <div className={"faq-item" + (open === i ? " open" : "")} key={q}>
+                <button className="faq-q" aria-expanded={open === i} aria-controls={"faq-body-" + i}
+                        onClick={() => setOpen(open === i ? -1 : i)}>
                   {q}
                   <span className="faq-chev">{Icons.chevD}</span>
                 </button>
-                <div className="faq-a"><p>{a}</p></div>
+                <div className="faq-a" id={"faq-body-" + i} role="region"><p>{a}</p></div>
               </div>
             ))}
           </div>

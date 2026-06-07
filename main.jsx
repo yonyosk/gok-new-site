@@ -1,6 +1,26 @@
 // GOK site — app shell: client routing, Tweaks, render.
 const { useState: useAppState, useEffect: useAppEffect } = React;
 
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { err: null }; }
+  static getDerivedStateFromError(err) { return { err }; }
+  render() {
+    if (this.state.err) {
+      return (
+        <div style={{ padding: "60px 24px", textAlign: "center" }}>
+          <h2 style={{ marginBottom: 12 }}>משהו השתבש</h2>
+          <p style={{ color: "#666", marginBottom: 24 }}>אירעה שגיאה בטעינת הדף. נסו לרענן.</p>
+          <button onClick={() => this.setState({ err: null })}
+                  style={{ padding: "10px 24px", background: "#234F47", color: "#fff", borderRadius: 8, border: 0, cursor: "pointer" }}>
+            רענון
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // Device-preview: when embedded (?frame=…) we render only the site, no chrome,
 // so CSS media queries respond to the IFRAME width (true mobile/tablet layout).
 const EMBED_PARAM = new URLSearchParams(location.search).get("frame");
@@ -20,7 +40,18 @@ function Router() {
   const onNav = (route, params = {}) => {
     setNav({ route, params });
     window.scrollTo({ top: 0, behavior: "auto" });
+    if (!IS_EMBED) history.pushState({ route, params }, "", "/" + (route === "home" ? "" : route));
   };
+
+  useAppEffect(() => {
+    const onPop = (e) => {
+      const s = e.state;
+      if (s && s.route) setNav({ route: s.route, params: s.params || {} });
+      else setNav({ route: "home", params: {} });
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   useAppEffect(() => {
     document.documentElement.style.setProperty("--gok-lime", t.cardAccent);
@@ -53,12 +84,14 @@ function Router() {
     : <HomePage onNav={onNav} tweaks={t} />;
 
   const { lang } = useLang();
-  const pageKey = route + "|" + (params.q || params.id || params.kosher || "") + "|" + lang + "|" + t.homeVersion;
+  const pageKey = route + "|" + (params.q || params.id || params.kosher || "") + "|" + t.homeVersion;
 
   const appContent = (
     <React.Fragment>
       <Header route={route} onNav={onNav} />
-      <main className="app-main" key={pageKey}>{page}</main>
+      <main id="main-content" className="app-main" key={pageKey}>
+        <ErrorBoundary key={pageKey}>{page}</ErrorBoundary>
+      </main>
       <Footer onNav={onNav} />
       <AuthModal />
     </React.Fragment>

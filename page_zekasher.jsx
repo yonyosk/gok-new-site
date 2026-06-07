@@ -66,7 +66,7 @@ function ProductCard({ p, mini, onFav, faved }) {
         </div>
         <div className="pcard-img" style={{ background: p.tone }}>
           {p.image
-            ? <img src={p.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ? <img src={p.image} alt={lang === "he" ? p.he : p.en} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             : <React.Fragment><CatGlyph cat={p.cat} /><span className="ph-brand">{p.brand}</span></React.Fragment>}
         </div>
       </div>
@@ -82,9 +82,9 @@ function FilterSheet({ open, onClose, country, setCountry, kosher, setKosher, ca
   return (
     <React.Fragment>
       <div className={"sheet-scrim" + (open ? " open" : "")} onClick={onClose} />
-      <div className={"sheet" + (open ? " open" : "")} role="dialog" aria-modal="true">
+      <div className={"sheet" + (open ? " open" : "")} role="dialog" aria-modal="true" aria-labelledby="filter-sheet-title">
         <div className="sheet-head">
-          <h3>{t.zekasher.filters}</h3>
+          <h3 id="filter-sheet-title">{t.zekasher.filters}</h3>
           <button onClick={onClose} aria-label="close">{Icons.x}</button>
         </div>
         <div className="sheet-body">

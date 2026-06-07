@@ -7,7 +7,9 @@ function ArticleCard({ a, tone, onNav }) {
   const cat = (lang === "he" ? STR.he : STR.en).guide.cats[a.cat];
   const c = lang === "he" ? a.he : a.en;
   return (
-    <div className="gcard" onClick={() => onNav("article", { id: a.id })}>
+    <div className="gcard" role="button" tabIndex={0}
+         onClick={() => onNav("article", { id: a.id })}
+         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onNav("article", { id: a.id }); } }}>
       <div className="gcard-top" style={{ background: tone || "#234F47" }}>
         <Sparkle tone="lime" className="spk" />
         <span className="gcard-cat">{cat}</span>

@@ -1,5 +1,6 @@
 {
   "rewrites": [
-    { "source": "/zkapi/:path*", "destination": "https://new-app.zekasher.com/api/v1/:path*" }
+    { "source": "/zkapi/:path*", "destination": "https://new-app.zekasher.com/api/v1/:path*" },
+    { "source": "/((?!assets|_|favicon).*)", "destination": "/index.html" }
   ]
 }
