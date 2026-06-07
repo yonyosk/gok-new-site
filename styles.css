@@ -870,6 +870,8 @@ body.vp-stage-open{overflow:hidden}
 .auth-tab-sub{font-size:14.5px;line-height:1.55;color:var(--gok-ink-2);margin-bottom:18px}
 .auth-switch{font-size:13.5px;color:var(--gok-ink-3);text-align:center;margin-top:14px}
 .auth-switch button{color:var(--gok-green);font-weight:700;text-decoration:underline}
+.auth-demo-btn{display:block;width:100%;margin-top:10px;padding:9px;border:1.5px dashed var(--gok-border);border-radius:10px;background:transparent;color:var(--gok-ink-3);font-size:13px;cursor:pointer;transition:border-color .15s,color .15s}
+.auth-demo-btn:hover{border-color:var(--gok-green);color:var(--gok-green)}
 
 /* header: sign in + register side-by-side */
 .acct-guest-row{display:flex;align-items:center;gap:8px}

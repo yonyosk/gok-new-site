@@ -127,8 +127,9 @@ function AccountButton({ compact }) {
 
 // ── modal ──────────────────────────────────────────────────────────
 function AuthModal() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const { authOpen, authTab, closeAuth, register, signin } = useAuth();
+  const DEMO = { email: "demo@kosher.global", password: "GOKdemo123" };
   const a = t.auth;
   const [tab, setTab] = useAuthState(authTab);
   const [vals, setVals] = useAuthState({ name: "", phone: "", email: "", password: "", confirmPassword: "" });
@@ -279,6 +280,15 @@ function AuthModal() {
                         onClick={submitSignin} disabled={loading}>
                   {loading ? "…" : a.signinBtn}
                 </Button>
+                <button className="auth-demo-btn" disabled={loading} onClick={async () => {
+                  setLoading(true);
+                  const result = await signin(DEMO);
+                  setLoading(false);
+                  if (result.error) setSigninErr(a[result.error] || a.apiError);
+                  else closeAuth();
+                }}>
+                  {lang === "he" ? "כניסה עם חשבון הדגמה" : "Sign in as demo user"}
+                </button>
                 <p className="auth-switch">
                   {a.noAccount}{" "}
                   <button onClick={() => { setTab("register"); setSigninErr(""); }}>{a.tabRegister}</button>
