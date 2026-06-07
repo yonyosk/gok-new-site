@@ -258,7 +258,7 @@ function matchProduct(p, { q, country, kosher, cat }, lang) {
 }
 
 // ── Live ZeKasher API ──────────────────────────────────────────────
-const API_BASE = "https://new-app.zekasher.com/api/v1";
+const API_BASE = "/zkapi";
 const GUEST_EMAIL = "api.new.site@site.new";
 const GUEST_PASSWORD = "This0i$-New";
 

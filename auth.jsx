@@ -4,7 +4,7 @@ const { useState: useAuthState, useEffect: useAuthEffect, useRef: useAuthRef } =
 
 const AuthCtx = React.createContext(null);
 
-const AUTH_BASE = "https://new-app.zekasher.com/api/v1";
+const AUTH_BASE = "/zkapi";
 
 function decodeJwtPayload(token) {
   try { return JSON.parse(atob(token.split(".")[1])); } catch { return null; }

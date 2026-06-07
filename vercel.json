@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/zkapi/:path*", "destination": "https://new-app.zekasher.com/api/v1/:path*" }
+  ]
+}
