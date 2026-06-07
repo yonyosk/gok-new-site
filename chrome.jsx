@@ -15,6 +15,7 @@ function LangToggle({ compact }) {
 function NavDropdown({ label, items, route, go }) {
   const [open, setOpen] = useChromeState(false);
   const ref = React.useRef(null);
+  const closeTimer = React.useRef(null);
   React.useEffect(() => {
     const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     document.addEventListener("mousedown", h);
@@ -23,7 +24,8 @@ function NavDropdown({ label, items, route, go }) {
   const active = items.some(([r]) => r === route);
   return (
     <div className={"nav-dd" + (open ? " open" : "")} ref={ref}
-         onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+         onMouseEnter={() => { clearTimeout(closeTimer.current); setOpen(true); }}
+         onMouseLeave={() => { closeTimer.current = setTimeout(() => setOpen(false), 120); }}>
       <button className={"nav-dd-trigger" + (active ? " active" : "")}
               onClick={() => setOpen((o) => !o)}>
         {label}{Icons.chevD}
