@@ -1,43 +1,71 @@
-// GOK site — auth layer: registration + sign-in (name / phone / email + mailing consent),
-// persisted to localStorage. Registration unlocks the full ZeKasher database.
+// GOK site — auth layer: registration + sign-in via live ZeKasher API.
+// Tokens stored in gok-api-tokens; user profile in gok-user.
 const { useState: useAuthState, useEffect: useAuthEffect, useRef: useAuthRef } = React;
 
 const AuthCtx = React.createContext(null);
 
-// helpers for the multi-user localStorage "database"
-const loadUsers = () => { try { return JSON.parse(localStorage.getItem("gok-users") || "[]"); } catch (e) { return []; } };
-const saveUsers = (arr) => localStorage.setItem("gok-users", JSON.stringify(arr));
+const AUTH_BASE = "https://new-app.zekasher.com/api/v1";
+
+function decodeJwtPayload(token) {
+  try { return JSON.parse(atob(token.split(".")[1])); } catch { return null; }
+}
+
+function userFromTokens(tokens, fallbackName, fallbackEmail) {
+  const payload = decodeJwtPayload(tokens.access_token);
+  return {
+    name: payload?.display_name || fallbackName || (fallbackEmail || "").split("@")[0],
+    email: payload?.email || payload?.sub || fallbackEmail || "",
+    since: Date.now(),
+  };
+}
 
 function AuthProvider({ children }) {
   const [user, setUser] = useAuthState(() => {
     try { return JSON.parse(localStorage.getItem("gok-user") || "null"); }
-    catch (e) { return null; }
+    catch { return null; }
   });
   const [authOpen, setAuthOpen] = useAuthState(false);
-  const [authTab, setAuthTab] = useAuthState("register"); // "register" | "signin"
+  const [authTab, setAuthTab] = useAuthState("register");
 
-  const register = (data) => {
-    const u = { ...data, since: Date.now() };
-    // persist to session + users db (deduplicate by email)
-    const users = loadUsers().filter((x) => x.email !== u.email);
-    saveUsers([...users, u]);
+  const register = async ({ name, phone, email, password, consent }) => {
+    const r = await fetch(`${AUTH_BASE}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, display_name: name }),
+    });
+    const d = await r.json();
+    if (!r.ok) {
+      const msg = d?.detail || "";
+      if (r.status === 400 && msg.toLowerCase().includes("exist")) return { error: "emailTaken" };
+      return { error: "apiError" };
+    }
+    localStorage.setItem("gok-api-tokens", JSON.stringify(d));
+    const u = { name, phone, email, consent, since: Date.now() };
     localStorage.setItem("gok-user", JSON.stringify(u));
     setUser(u);
-    return u;
+    return { ok: true };
   };
 
-  const signin = (email) => {
-    const users = loadUsers();
-    const found = users.find((x) => x.email.toLowerCase() === email.toLowerCase().trim());
-    if (found) {
-      localStorage.setItem("gok-user", JSON.stringify(found));
-      setUser(found);
-      return found;
-    }
-    return null;
+  const signin = async ({ email, password }) => {
+    const r = await fetch(`${AUTH_BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const d = await r.json();
+    if (!r.ok) return { error: "invalidCredentials" };
+    localStorage.setItem("gok-api-tokens", JSON.stringify(d));
+    const u = userFromTokens(d, null, email);
+    localStorage.setItem("gok-user", JSON.stringify(u));
+    setUser(u);
+    return { ok: true };
   };
 
-  const logout = () => { localStorage.removeItem("gok-user"); setUser(null); };
+  const logout = () => {
+    localStorage.removeItem("gok-user");
+    localStorage.removeItem("gok-api-tokens");
+    setUser(null);
+  };
   const openAuth = (tab = "register") => { setAuthTab(tab); setAuthOpen(true); };
   const closeAuth = () => setAuthOpen(false);
 
@@ -103,22 +131,23 @@ function AuthModal() {
   const { authOpen, authTab, closeAuth, register, signin } = useAuth();
   const a = t.auth;
   const [tab, setTab] = useAuthState(authTab);
-  const [vals, setVals] = useAuthState({ name: "", phone: "", email: "" });
+  const [vals, setVals] = useAuthState({ name: "", phone: "", email: "", password: "", confirmPassword: "" });
   const [consent, setConsent] = useAuthState(false);
   const [errs, setErrs] = useAuthState({});
   const [done, setDone] = useAuthState(false);
-  const [signinEmail, setSigninEmail] = useAuthState("");
+  const [loading, setLoading] = useAuthState(false);
+  const [signinVals, setSigninVals] = useAuthState({ email: "", password: "" });
   const [signinErr, setSigninErr] = useAuthState("");
 
-  // sync tab from context when modal opens / tab prop changes
   useAuthEffect(() => {
     if (authOpen) {
       setTab(authTab);
-      setVals({ name: "", phone: "", email: "" });
+      setVals({ name: "", phone: "", email: "", password: "", confirmPassword: "" });
       setConsent(false);
       setErrs({});
       setDone(false);
-      setSigninEmail("");
+      setLoading(false);
+      setSigninVals({ email: "", password: "" });
       setSigninErr("");
     }
   }, [authOpen, authTab]);
@@ -131,33 +160,51 @@ function AuthModal() {
   if (!authOpen) return null;
 
   const set = (k, v) => setVals((s) => ({ ...s, [k]: v }));
+  const setSi = (k, v) => setSigninVals((s) => ({ ...s, [k]: v }));
 
-  const submitRegister = () => {
+  const submitRegister = async () => {
     const e = {};
     if (!vals.name.trim()) e.name = a.required;
     if (!vals.phone.trim()) e.phone = a.required;
     else if (!/^[+\d][\d\s()-]{6,}$/.test(vals.phone.trim())) e.phone = a.invalidPhone;
     if (!vals.email.trim()) e.email = a.required;
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(vals.email)) e.email = a.invalidEmail;
+    if (!vals.password) e.password = a.required;
+    else if (vals.password.length < 8) e.password = a.passwordShort;
+    if (vals.confirmPassword !== vals.password) e.confirmPassword = a.passwordMismatch;
     if (!consent) e.consent = a.mustConsent;
     setErrs(e);
-    if (Object.keys(e).length === 0) { register({ ...vals, consent: true }); setDone(true); }
+    if (Object.keys(e).length > 0) return;
+
+    setLoading(true);
+    const result = await register({ ...vals, consent: true });
+    setLoading(false);
+    if (result.error) {
+      setErrs({ _api: a[result.error] || a.apiError });
+    } else {
+      setDone(true);
+    }
   };
 
-  const submitSignin = () => {
-    if (!signinEmail.trim()) { setSigninErr(a.required); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signinEmail)) { setSigninErr(a.invalidEmail); return; }
-    const found = signin(signinEmail);
-    if (!found) { setSigninErr(a.notFound); return; }
+  const submitSignin = async () => {
+    if (!signinVals.email.trim()) { setSigninErr(a.required); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signinVals.email)) { setSigninErr(a.invalidEmail); return; }
+    if (!signinVals.password) { setSigninErr(a.required); return; }
+
+    setLoading(true);
+    const result = await signin(signinVals);
+    setLoading(false);
+    if (result.error) { setSigninErr(a[result.error] || a.apiError); return; }
     closeAuth();
   };
 
-  const field = (k, label, type = "text") => (
+  const field = (k, label, type = "text", onEnter) => (
     <div className={"field" + (errs[k] ? " err" : "")}>
       <label>{label} <span className="req">*</span></label>
       <input type={type} value={vals[k]} dir={k === "email" || k === "phone" ? "ltr" : undefined}
+             autoComplete={k === "password" ? "new-password" : k === "confirmPassword" ? "new-password" : k}
              onChange={(e) => set(k, e.target.value)}
-             onKeyDown={(e) => { if (e.key === "Enter") submitRegister(); }} />
+             onKeyDown={(e) => { if (e.key === "Enter") (onEnter || submitRegister)(); }} />
       {errs[k] && <div className="errmsg">{errs[k]}</div>}
     </div>
   );
@@ -181,7 +228,6 @@ function AuthModal() {
               <Logo variant="darkgreen" style={{ height: 40 }} />
             </div>
 
-            {/* tab toggle */}
             <div className="auth-tabs">
               <button className={"auth-tab" + (tab === "register" ? " on" : "")}
                       onClick={() => { setTab("register"); setErrs({}); setSigninErr(""); }}>
@@ -199,25 +245,40 @@ function AuthModal() {
                 {field("name", a.name)}
                 {field("phone", a.phone, "tel")}
                 {field("email", a.email, "email")}
+                {field("password", a.password, "password")}
+                {field("confirmPassword", a.confirmPassword, "password")}
                 <div className={"check-field" + (consent ? " on" : "") + (errs.consent ? " err" : "")}
                      onClick={() => setConsent((c) => !c)}>
                   <span className="box">{Icons.check}</span>
                   <span>{a.consent}</span>
                 </div>
                 {errs.consent && <div className="errmsg" style={{ marginTop: -8, marginBottom: 12 }}>{errs.consent}</div>}
-                <Button kind="primary" lg className="btn-block" icon={Icons.user} onClick={submitRegister}>{a.submit}</Button>
+                {errs._api && <div className="errmsg" style={{ marginBottom: 12 }}>{errs._api}</div>}
+                <Button kind="primary" lg className="btn-block" icon={Icons.user}
+                        onClick={submitRegister} disabled={loading}>
+                  {loading ? "…" : a.submit}
+                </Button>
               </div>
             ) : (
               <div className="modal-body">
                 <p className="auth-tab-sub">{a.signinSub}</p>
                 <div className={"field" + (signinErr ? " err" : "")}>
                   <label>{a.email} <span className="req">*</span></label>
-                  <input type="email" value={signinEmail} dir="ltr"
-                         onChange={(e) => { setSigninEmail(e.target.value); setSigninErr(""); }}
+                  <input type="email" value={signinVals.email} dir="ltr" autoComplete="email"
+                         onChange={(e) => { setSi("email", e.target.value); setSigninErr(""); }}
+                         onKeyDown={(e) => { if (e.key === "Enter") submitSignin(); }} />
+                </div>
+                <div className={"field" + (signinErr ? " err" : "")}>
+                  <label>{a.password} <span className="req">*</span></label>
+                  <input type="password" value={signinVals.password} dir="ltr" autoComplete="current-password"
+                         onChange={(e) => { setSi("password", e.target.value); setSigninErr(""); }}
                          onKeyDown={(e) => { if (e.key === "Enter") submitSignin(); }} />
                   {signinErr && <div className="errmsg">{signinErr}</div>}
                 </div>
-                <Button kind="primary" lg className="btn-block" icon={Icons.user} onClick={submitSignin}>{a.signinBtn}</Button>
+                <Button kind="primary" lg className="btn-block" icon={Icons.user}
+                        onClick={submitSignin} disabled={loading}>
+                  {loading ? "…" : a.signinBtn}
+                </Button>
                 <p className="auth-switch">
                   {a.noAccount}{" "}
                   <button onClick={() => { setTab("register"); setSigninErr(""); }}>{a.tabRegister}</button>

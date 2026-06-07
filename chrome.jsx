@@ -50,7 +50,7 @@ function Header({ route, onNav }) {
     ["pesach", t.nav.pesach],
   ];
   const mainItems = [["home", t.nav.home], ["zekasher", t.nav.zekasher]];
-  const tailItems = [["about", t.nav.about], ["support", t.nav.support], ["contact", t.nav.contact]];
+  const tailItems = [["about", t.nav.about], ["solutions", t.nav.solutions], ["contact", t.nav.contact]];
   const go = (r) => { onNav(r); setOpen(false); setGuideOpen(false); };
   const guideActive = guideItems.some(([r]) => r === route);
   return (

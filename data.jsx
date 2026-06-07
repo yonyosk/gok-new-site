@@ -53,60 +53,122 @@ function matchProduct(p, { q, country, kosher, cat }, lang) {
   return true;
 }
 
-// ════════════════════════════════════════════════════════════════════
-//  ZeKasher product search — API integration point.
-//  ▶ To go LIVE: fill API_CONFIG below with the endpoint + token from the
-//    kosher.global ZeKasher search function. When `endpoint` is set, the app
-//    calls the real API (in the user's browser); otherwise it uses the local
-//    sample set. Adjust `params` (query-string keys the API expects) and
-//    `mapResponse` (how to turn the API payload into our Product shape).
-// ════════════════════════════════════════════════════════════════════
-const API_CONFIG = {
-  endpoint: "",                 // e.g. "https://kosher.global/wp-json/zekasher/v1/products"
-  token: "",                    // bearer/API token from the ZeKasher search function
-  tokenHeader: "Authorization", // header name; value sent as `Bearer <token>`
-  // map our filter state → the query params the live API expects:
-  params: ({ q, country, kosher, cat }) => ({
-    q: q || "",
-    country: country && country !== "all" ? country : "",
-    kosher: kosher && kosher !== "all" ? kosher : "",
-    category: cat && cat !== "all" ? cat : "",
-  }),
-  // map a single API record → our Product shape (edit field names to match the API):
-  mapItem: (r) => ({
-    id: r.id, brand: r.brand, he: r.name_he || r.name, en: r.name_en || r.name,
-    cat: r.category, kosher: r.kosher_types || [], cert: r.certifier, certEn: r.certifier_en || r.certifier,
-    barcode: r.barcode, countries: r.countries || [], tone: r.color || "#234F47", image: r.image || null,
-  }),
-  mapResponse: (json) => ({
-    items: (json.items || json.data || json).map(API_CONFIG.mapItem),
-    total: json.total != null ? json.total : (json.items || json.data || json).length,
-  }),
-};
+// ── Live ZeKasher API ──────────────────────────────────────────────
+const API_BASE = "https://new-app.zekasher.com/api/v1";
+const GUEST_EMAIL = "api.new.site@site.new";
+const GUEST_PASSWORD = "This0i$-New";
 
-// The API hook. Async on purpose so swapping local↔live needs no caller changes.
-async function searchProducts(params = {}, lang = "he") {
-  // ── LIVE path ──────────────────────────────────────────────────────
-  if (API_CONFIG.endpoint) {
-    try {
-      const qs = new URLSearchParams(API_CONFIG.params(params)).toString();
-      const headers = { Accept: "application/json" };
-      if (API_CONFIG.token) headers[API_CONFIG.tokenHeader] = `Bearer ${API_CONFIG.token}`;
-      const res = await fetch(`${API_CONFIG.endpoint}?${qs}`, { headers });
-      if (!res.ok) throw new Error(`API ${res.status}`);
-      return API_CONFIG.mapResponse(await res.json());
-    } catch (err) {
-      console.warn("[ZeKasher] live API failed, falling back to sample data:", err);
-      // fall through to local sample
+let _guestToken = null;
+let _guestTokenExpiry = 0;
+
+async function fetchGuestToken() {
+  if (_guestToken && Date.now() < _guestTokenExpiry) return _guestToken;
+  const r = await fetch(`${API_BASE}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: GUEST_EMAIL, password: GUEST_PASSWORD }),
+  });
+  if (!r.ok) throw new Error(`Guest auth failed: ${r.status}`);
+  const d = await r.json();
+  _guestToken = d.access_token;
+  _guestTokenExpiry = Date.now() + 55 * 60 * 1000;
+  return _guestToken;
+}
+
+async function getApiToken() {
+  try {
+    const stored = JSON.parse(localStorage.getItem("gok-api-tokens") || "null");
+    if (stored?.access_token) return { token: stored.access_token, isUser: true };
+  } catch {}
+  const token = await fetchGuestToken();
+  return { token, isUser: false };
+}
+
+async function refreshUserToken() {
+  try {
+    const stored = JSON.parse(localStorage.getItem("gok-api-tokens") || "null");
+    if (!stored?.refresh_token) return null;
+    const r = await fetch(`${API_BASE}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: stored.refresh_token }),
+    });
+    if (!r.ok) { localStorage.removeItem("gok-api-tokens"); return null; }
+    const d = await r.json();
+    localStorage.setItem("gok-api-tokens", JSON.stringify(d));
+    return d.access_token;
+  } catch { return null; }
+}
+
+async function apiFetch(url, options = {}) {
+  let { token, isUser } = await getApiToken();
+  const doFetch = (t) => fetch(url, {
+    ...options,
+    headers: { ...options.headers, Authorization: `Bearer ${t}` },
+  });
+  let resp = await doFetch(token);
+  if (resp.status === 401) {
+    if (isUser) {
+      const newToken = await refreshUserToken();
+      if (newToken) { resp = await doFetch(newToken); }
+      else { localStorage.removeItem("gok-api-tokens"); }
+    } else {
+      _guestToken = null;
+      const newToken = await fetchGuestToken();
+      if (newToken) resp = await doFetch(newToken);
     }
   }
-  // ── SAMPLE path (default) ──────────────────────────────────────────
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const items = PRODUCTS.filter((p) => matchProduct(p, params, lang));
-      resolve({ items, total: items.length });
-    }, 260); // simulate network latency
-  });
+  return resp;
+}
+
+const mapApiProduct = (r) => ({
+  id: r.id,
+  brand: r.brand_name || "",
+  he: r.name_he || r.canonical_name || "",
+  en: r.name_en || r.canonical_name || "",
+  cat: "",
+  kosher: [],
+  cert: "",
+  certEn: "",
+  barcode: r.barcode || "",
+  countries: [],
+  tone: "#234F47",
+  image: r.image_url || r.front_image_url || null,
+  apiStatus: r.status || "unhandled",
+});
+
+async function searchProducts(params = {}, lang = "he") {
+  try {
+    const qs = new URLSearchParams({ q: params.q || "", limit: 20, skip: params.skip || 0 });
+    const resp = await apiFetch(`${API_BASE}/products/search?${qs}`);
+    if (!resp || !resp.ok) throw new Error(`API ${resp?.status}`);
+    const json = await resp.json();
+    return { items: (json.items || []).map(mapApiProduct), total: json.total || 0, hasMore: json.has_more || false };
+  } catch (err) {
+    console.warn("[ZeKasher] search API failed, using sample data:", err);
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const items = PRODUCTS.filter((p) => matchProduct(p, params, lang));
+        resolve({ items, total: items.length, hasMore: false });
+      }, 260);
+    });
+  }
+}
+
+async function lookupBarcode(barcode) {
+  if (!barcode?.trim()) return null;
+  try {
+    const resp = await apiFetch(`${API_BASE}/products/barcode/${encodeURIComponent(barcode.trim())}`);
+    if (!resp) return null;
+    if (resp.status === 404) return [];
+    if (!resp.ok) throw new Error(`API ${resp.status}`);
+    const r = await resp.json();
+    const products = Array.isArray(r) ? r : [r];
+    return products.map(mapApiProduct);
+  } catch (err) {
+    console.warn("[ZeKasher] barcode lookup failed:", err);
+    return null;
+  }
 }
 
 // ---- Guide / article content (placeholders) ----

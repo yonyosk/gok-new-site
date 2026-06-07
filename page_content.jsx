@@ -445,4 +445,78 @@ function UtensilsPage({ onNav }) {
   );
 }
 
-Object.assign(window, { ArticleCard, PageHead, FormField, AboutPage, GuidePage, ArticlePage, SupportPage, UtensilsPage });
+function SolutionsPage({ onNav }) {
+  const { t, lang } = useLang();
+  const s = t.solutions;
+  return (
+    <React.Fragment>
+      <section className="sol-hero">
+        <div className="hero-lozenge" />
+        <div className="wrap">
+          <Eyebrow onDark>{t.nav.solutions}</Eyebrow>
+          <h1>{s.title}</h1>
+          <p>{s.lead}</p>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="wrap">
+          <div className="sol-grid">
+            {/* Business */}
+            <div className="sol-card sol-card--business">
+              <div className="sol-card-head">
+                <span className="sol-card-ic">{Icons.star}</span>
+                <div>
+                  <h2>{s.businessTitle}</h2>
+                  <p>{s.businessLead}</p>
+                </div>
+              </div>
+              <ul className="sol-list">
+                {s.businessItems.map((item) => (
+                  <li key={item}><span>{Icons.check}</span>{item}</li>
+                ))}
+              </ul>
+              <Button kind="primary" lg icon={Icons.arrow} onClick={() => onNav("contact")}>
+                {s.businessCta}
+              </Button>
+            </div>
+
+            {/* Personal */}
+            <div className="sol-card sol-card--personal">
+              <div className="sol-card-head">
+                <span className="sol-card-ic">{Icons.user}</span>
+                <div>
+                  <h2>{s.personalTitle}</h2>
+                  <p>{s.personalLead}</p>
+                </div>
+              </div>
+              <ul className="sol-list">
+                {s.personalItems.map((item) => (
+                  <li key={item}><span>{Icons.check}</span>{item}</li>
+                ))}
+              </ul>
+              <Button kind="outline" lg icon={Icons.arrow} onClick={() => onNav("zekasher")}>
+                {s.personalCta}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="section feat sol-cta-band">
+        <div className="wrap">
+          <div className="sec-head center">
+            <h2>{s.ctaTitle}</h2>
+            <p>{s.ctaSub}</p>
+          </div>
+          <div className="sol-cta-row">
+            <Button kind="lime" lg icon={Icons.arrow} onClick={() => onNav("contact")}>{s.ctaContact}</Button>
+            <Button kind="ghost-light" lg icon={Icons.arrow} onClick={() => onNav("zekasher")}>{s.ctaZekasher}</Button>
+          </div>
+        </div>
+      </section>
+    </React.Fragment>
+  );
+}
+
+Object.assign(window, { ArticleCard, PageHead, FormField, AboutPage, GuidePage, ArticlePage, SupportPage, UtensilsPage, SolutionsPage });

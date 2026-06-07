@@ -41,6 +41,7 @@ function Router() {
   else if (route === "about") page = <AboutPage onNav={onNav} />;
   else if (route === "guide") page = <GuidePage onNav={onNav} />;
   else if (route === "article") page = <ArticlePage articleId={params.id} onNav={onNav} />;
+  else if (route === "solutions") page = <SolutionsPage onNav={onNav} />;
   else if (route === "support") page = <SupportPage onNav={onNav} />;
   else if (route === "utensils") page = <UtensilsPage onNav={onNav} />;
   else if (route === "pesach") page = <PesachPage onNav={onNav} />;
