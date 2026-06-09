@@ -75,8 +75,34 @@ function ProductCard({ p, mini, onFav, faved }) {
   );
 }
 
+// ---- country picker bottom-sheet ----
+function CountrySheet({ open, onClose, country, setCountry }) {
+  const { t, lang } = useLang();
+  return (
+    <React.Fragment>
+      <div className={"sheet-scrim" + (open ? " open" : "")} onClick={onClose} />
+      <div className={"sheet" + (open ? " open" : "")} role="dialog" aria-modal="true" aria-labelledby="country-sheet-title">
+        <div className="sheet-head">
+          <h3 id="country-sheet-title">{t.zekasher.country}</h3>
+          <button onClick={onClose} aria-label="close">{Icons.x}</button>
+        </div>
+        <div className="sheet-body">
+          <div className="fopts">
+            {COUNTRIES.map((c) => (
+              <button key={c.code} className={"fopt" + (country === c.code ? " on" : "")}
+                      onClick={() => { setCountry(c.code); onClose(); }}>
+                <span className="flag">{c.flag}</span>{lang === "he" ? c.he : c.en}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </React.Fragment>
+  );
+}
+
 // ---- filter bottom-sheet ----
-function FilterSheet({ open, onClose, country, setCountry, kosher, setKosher, cat, setCat, onApply }) {
+function FilterSheet({ open, onClose, kosher, setKosher, cat, setCat, onApply }) {
   const { t, lang } = useLang();
   const kt = t.zekasher.kosherTypes;
   return (
@@ -88,17 +114,6 @@ function FilterSheet({ open, onClose, country, setCountry, kosher, setKosher, ca
           <button onClick={onClose} aria-label="close">{Icons.x}</button>
         </div>
         <div className="sheet-body">
-          <div className="fgroup">
-            <h4>{t.zekasher.country}</h4>
-            <div className="fopts">
-              {COUNTRIES.map((c) => (
-                <button key={c.code} className={"fopt" + (country === c.code ? " on" : "")}
-                        onClick={() => setCountry(c.code)}>
-                  <span className="flag">{c.flag}</span>{lang === "he" ? c.he : c.en}
-                </button>
-              ))}
-            </div>
-          </div>
           <div className="fgroup">
             <h4>{t.zekasher.kosherFor}</h4>
             <div className="fopts">
@@ -121,7 +136,7 @@ function FilterSheet({ open, onClose, country, setCountry, kosher, setKosher, ca
           </div>
         </div>
         <div className="sheet-foot">
-          <Button kind="outline" onClick={() => { setCountry("all"); setKosher("all"); setCat("all"); }}>
+          <Button kind="outline" onClick={() => { setKosher("all"); setCat("all"); }}>
             {lang === "he" ? "איפוס" : "Reset"}
           </Button>
           <Button kind="primary" onClick={onApply}>
@@ -142,10 +157,12 @@ function ZeKasherPage(props) {
 function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
   const { t, lang } = useLang();
   const [q, setQ] = useZkState(initialQuery || "");
+  const [committedQ, setCommittedQ] = useZkState(initialQuery || "");
   const [country, setCountry] = useZkState("all");
   const [kosher, setKosher] = useZkState(initialKosher || "all");
   const [cat, setCat] = useZkState("all");
   const [sheet, setSheet] = useZkState(false);
+  const [countrySheet, setCountrySheet] = useZkState(false);
   const [loading, setLoading] = useZkState(true);
   const [res, setRes] = useZkState({ items: [], total: 0 });
   const [favs, setFavs] = useZkState({});
@@ -154,13 +171,14 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
   useZkEffect(() => {
     const id = ++reqId.current;
     setLoading(true);
-    searchProducts({ q, country, kosher, cat }, lang).then((r) => {
+    searchProducts({ q: committedQ, approved_only: true, country, kosher, cat }, lang).then((r) => {
       if (id === reqId.current) { setRes(r); setLoading(false); }
     });
-  }, [q, country, kosher, cat, lang]);
+  }, [committedQ, country, kosher, cat, lang]);
 
+  const commitSearch = () => setCommittedQ(q);
   const toggleFav = (id) => setFavs((f) => ({ ...f, [id]: !f[id] }));
-  const activeFilters = (country !== "all" ? 1 : 0) + (kosher !== "all" ? 1 : 0) + (cat !== "all" ? 1 : 0);
+  const activeFilters = (kosher !== "all" ? 1 : 0) + (cat !== "all" ? 1 : 0);
   const sel = countryByCode(country);
   const kt = t.zekasher.kosherTypes;
 
@@ -173,13 +191,27 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
           <h1>{t.zekasher.title}</h1>
           <p>{t.zekasher.sub}</p>
 
+          <div className="zk-country-strip">
+            <button className="zk-country-btn" onClick={() => setCountrySheet(true)}>
+              <span className="zk-country-label">{t.zekasher.buyingIn}</span>
+              <span className="flag">{sel.flag}</span>
+              <span>{country === "all" ? t.zekasher.allCountries : (lang === "he" ? sel.he : sel.en)}</span>
+              {Icons.chevD}
+            </button>
+            {country === "all" && <span className="zk-country-nudge">{t.zekasher.selectCountry}</span>}
+          </div>
+
           <div className="zk-tools">
             <div className="zk-searchbar">
-              {Icons.search}
+              <button className="zk-search-go" aria-label={lang === "he" ? "חפש" : "Search"}
+                      onClick={commitSearch}>
+                {Icons.search}
+              </button>
               <input value={q} placeholder={t.zekasher.searchPlaceholder}
-                     onChange={(e) => setQ(e.target.value)} />
+                     onChange={(e) => setQ(e.target.value)}
+                     onKeyDown={(e) => { if (e.key === "Enter") commitSearch(); }} />
               {q ? (
-                <button className="scan" aria-label="clear" onClick={() => setQ("")}>{Icons.x}</button>
+                <button className="scan" aria-label="clear" onClick={() => { setQ(""); setCommittedQ(""); }}>{Icons.x}</button>
               ) : (
                 <button className="scan" aria-label="scan barcode" title="Scan">{Icons.scan}</button>
               )}
@@ -188,11 +220,6 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
               <button className="zk-chip filter-btn" onClick={() => setSheet(true)}>
                 {Icons.filter}{t.zekasher.filter}
                 {activeFilters > 0 && <span className="count-dot">{activeFilters}</span>}
-              </button>
-              <button className="zk-chip" onClick={() => setSheet(true)}>
-                <span className="flag">{sel.flag}</span>
-                {country === "all" ? t.zekasher.allCountries : (lang === "he" ? sel.he : sel.en)}
-                {Icons.chevD}
               </button>
               {["all", "milk", "meat", "pareve", "passover"].map((k) => (
                 <button key={k} className={"zk-chip" + (kosher === k ? " on" : "")}
@@ -219,8 +246,8 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
         ) : res.items.length === 0 ? (
           <div className="zk-empty">
             <div className="ic">{Icons.search}</div>
-            <h3>{t.zekasher.empty}</h3>
-            <p>{t.zekasher.emptySub}</p>
+            <h3>{t.zekasher.emptyApproved}</h3>
+            <p>{t.zekasher.emptyApprovedSub}</p>
           </div>
         ) : (
           <div className={"zk-grid" + (zkView === "list" ? " list" : "")}>
@@ -252,8 +279,10 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
       </section>
 
       <FilterSheet open={sheet} onClose={() => setSheet(false)}
-        country={country} setCountry={setCountry} kosher={kosher} setKosher={setKosher}
+        kosher={kosher} setKosher={setKosher}
         cat={cat} setCat={setCat} onApply={() => setSheet(false)} />
+      <CountrySheet open={countrySheet} onClose={() => setCountrySheet(false)}
+        country={country} setCountry={setCountry} />
     </React.Fragment>
   );
 }
@@ -489,4 +518,4 @@ function PhoneMock({ compact }) {
   );
 }
 
-Object.assign(window, { ZeKasherPage, ZeKasherFull, ZeKasherGuest, ProductCard, PhoneMock, FilterSheet, CatGlyph });
+Object.assign(window, { ZeKasherPage, ZeKasherFull, ZeKasherGuest, ProductCard, PhoneMock, FilterSheet, CountrySheet, CatGlyph });

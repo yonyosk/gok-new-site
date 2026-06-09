@@ -346,6 +346,7 @@ async function searchProducts(params = {}, lang = "he") {
     const qs = new URLSearchParams({ q: params.q || "", limit: 20, skip: params.skip || 0 });
     if (params.country && params.country !== "all") qs.set("country_code", params.country);
     if (params.cat && params.cat !== "all") qs.set("category_id", params.cat);
+    if (params.approved_only) qs.set("approved_only", "true");
     const resp = await apiFetch(`${API_BASE}/products/search?${qs}`);
     if (!resp || !resp.ok) throw new Error(`API ${resp?.status}`);
     const json = await resp.json();
