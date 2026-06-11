@@ -40,10 +40,10 @@ function HomeHero({ onNav }) {
           <div className="hh-chat">
             <span>{t.home.chatPrompt}</span>
             <div className="hh-cta-row">
-              <Button kind="primary" lg icon={Icons.chat} onClick={() => onNav("zekasher")}>
+              <Button kind="outline" lg icon={Icons.chat} onClick={() => onNav("zekasher")}>
                 {t.home.chatCta}
               </Button>
-              <Button kind="outline" lg icon={Icons.search} onClick={() => onNav("zekasher")}>
+              <Button kind="primary" lg icon={Icons.search} onClick={() => onNav("zekasher")}>
                 {t.cta.search}
               </Button>
             </div>
@@ -181,9 +181,11 @@ function Solutions({ onNav }) {
           <button className={tab === "business" ? "on" : ""} onClick={() => setTab("business")}>{t.home.tabs.business}</button>
         </div>
         <div className="sol-rows">
-          {t.home.solutions.map((sol, i) => (
-            <SolutionRow key={sol.title} sol={sol} idx={i} onNav={onNav} />
-          ))}
+          {t.home.solutions
+            .filter((_, i) => tab === "personal" ? [0, 1].includes(i) : [0, 2].includes(i))
+            .map((sol, i) => (
+              <SolutionRow key={sol.title} sol={sol} idx={i} onNav={onNav} />
+            ))}
         </div>
       </div>
     </section>
@@ -203,9 +205,8 @@ function Updates({ onNav }) {
         </div>
         <div className="up-rail">
           {items.map((u, i) => (
-            <article className="up-card" key={u.title} role="button" tabIndex={0}
-                     onClick={() => onNav("article", { id: ARTICLES[i % ARTICLES.length].id })}
-                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onNav("article", { id: ARTICLES[i % ARTICLES.length].id }); } }}>
+            <button type="button" className="up-card" key={u.title}
+                    onClick={() => onNav("article", { id: ARTICLES[i % ARTICLES.length].id })}>
               <div className="up-media" style={{ background: GUIDE_TONES[i % GUIDE_TONES.length] }}>
                 <Sparkle tone="lime" className="up-spk" />
                 <span className="up-tag">{u.tag}</span>
@@ -215,7 +216,7 @@ function Updates({ onNav }) {
                 <h3>{u.title}</h3>
                 <p>{u.excerpt}</p>
               </div>
-            </article>
+            </button>
           ))}
         </div>
       </div>

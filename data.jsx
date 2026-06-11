@@ -374,6 +374,30 @@ async function lookupBarcode(barcode) {
   }
 }
 
+// Countries known to have significant GOK coverage — used as fallback when API has no country-count endpoint
+const GOK_ACTIVE_CODES = new Set(["AU","AT","BE","BR","BG","CA","CL","CO","HR","CZ","DK","EG","EE","FI","FR","DE","GR","HU","IN","IL","IT","JP","LV","LT","MX","NL","NZ","PL","PT","RO","ZA","ES","SE","CH","TH","TR","UA","GB","US","UY","AE","PH","TW"]);
+
+async function fetchAvailableCountries() {
+  try {
+    const resp = await apiFetch(`${API_BASE}/countries`);
+    if (!resp || !resp.ok) throw new Error("no endpoint");
+    const json = await resp.json();
+    const items = json.countries || json.items || json;
+    if (!Array.isArray(items) || items.length === 0) throw new Error("empty");
+    const codes = new Set(
+      items
+        .filter((c) => (c.count || c.total || c.product_count || 999) >= 100)
+        .map((c) => (c.country_code || c.code || "").toUpperCase())
+        .filter(Boolean)
+    );
+    if (codes.size === 0) throw new Error("no qualifying countries");
+    return COUNTRIES.filter((c) => c.code === "all" || codes.has(c.code));
+  } catch {
+    // Fall back to curated active-country list
+    return COUNTRIES.filter((c) => c.code === "all" || GOK_ACTIVE_CODES.has(c.code));
+  }
+}
+
 // ---- Guide / article content (placeholders) ----
 const ARTICLES = [
   { id: "kosher-abroad", cat: 1, read: 6,
@@ -474,4 +498,4 @@ const HOME_FAQ = {
   ],
 };
 
-Object.assign(window, { COUNTRIES, CATEGORIES, countryByCode, PRODUCTS, searchProducts, ARTICLES, ARTICLE_BODY, HOME_UPDATES, HOME_QA, HOME_FAQ });
+Object.assign(window, { COUNTRIES, CATEGORIES, countryByCode, PRODUCTS, searchProducts, lookupBarcode, fetchAvailableCountries, ARTICLES, ARTICLE_BODY, HOME_UPDATES, HOME_QA, HOME_FAQ });

@@ -28,7 +28,8 @@ function NavDropdown({ label, items, route, go }) {
          onMouseLeave={() => { closeTimer.current = setTimeout(() => setOpen(false), 120); }}>
       <button className={"nav-dd-trigger" + (active ? " active" : "")}
               aria-expanded={open} aria-haspopup="true"
-              onClick={() => setOpen((o) => !o)}>
+              onClick={() => setOpen((o) => !o)}
+              onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}>
         {label}{Icons.chevD}
       </button>
       <div className="nav-dd-menu" role="menu">
@@ -144,7 +145,6 @@ function Footer({ onNav }) {
         <div className="ftr-bottom">
           <span>{t.footer.rights}</span>
           <span>{t.footer.legal}</span>
-          <a href="admin.html" className="ftr-admin">{t.brand.name} · ניהול</a>
         </div>
       </div>
     </footer>

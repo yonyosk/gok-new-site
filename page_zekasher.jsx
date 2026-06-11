@@ -75,14 +75,14 @@ function ProductCard({ p, mini, onFav, faved }) {
 }
 
 // ---- country picker bottom-sheet ----
-function CountrySheet({ open, onClose, country, setCountry }) {
+function CountrySheet({ open, onClose, country, setCountry, countries = COUNTRIES }) {
   const { t, lang } = useLang();
   const [filter, setFilter] = React.useState("");
   React.useEffect(() => { if (!open) setFilter(""); }, [open]);
   const q = filter.trim().toLowerCase();
   const filtered = q
-    ? COUNTRIES.filter((c) => c.he.includes(filter.trim()) || c.en.toLowerCase().includes(q) || c.code.toLowerCase() === q)
-    : COUNTRIES;
+    ? countries.filter((c) => c.he.includes(filter.trim()) || c.en.toLowerCase().includes(q) || c.code.toLowerCase() === q)
+    : countries;
   return (
     <React.Fragment>
       <div className={"sheet-scrim" + (open ? " open" : "")} onClick={onClose} />
@@ -180,6 +180,12 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
   const [res, setRes] = useZkState({ items: [], total: 0 });
   const [favs, setFavs] = useZkState({});
   const reqId = useZkRef(0);
+  const [countryList, setCountryList] = useZkState(COUNTRIES);
+  const [scanWarnMsg, setScanWarnMsg] = useZkState("");
+
+  useZkEffect(() => {
+    fetchAvailableCountries().then(setCountryList);
+  }, []);
 
   useZkEffect(() => {
     const id = ++reqId.current;
@@ -198,7 +204,11 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
   const sel = countryByCode(country);
 
   const activateScan = () => {
-    if (!("BarcodeDetector" in window) && !/iPhone|iPad|Android/i.test(navigator.userAgent)) return;
+    if (!("BarcodeDetector" in window) && !/iPhone|iPad|Android/i.test(navigator.userAgent)) {
+      setScanWarnMsg(lang === "he" ? "סריקת ברקוד אינה נתמכת בדפדפן זה" : "Barcode scanning is not supported in this browser");
+      return;
+    }
+    setScanWarnMsg("");
     if (fileRef.current) fileRef.current.click();
   };
 
@@ -273,6 +283,7 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
               )}
             </div>
           </div>
+          {scanWarnMsg && <div className="zk-scan-msg">{Icons.info}{scanWarnMsg}</div>}
         </div>
       </section>
 
@@ -335,79 +346,19 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
         kosher={kosher} setKosher={setKosher}
         cat={cat} setCat={setCat} onApply={() => setSheet(false)} />
       <CountrySheet open={countrySheet} onClose={() => setCountrySheet(false)}
-        country={country} setCountry={setCountry} />
+        country={country} setCountry={setCountry} countries={countryList} />
       <input ref={fileRef} type="file" accept="image/*" capture="environment"
              style={{display:"none"}} onChange={onScanFile} />
     </React.Fragment>
   );
 }
 
-// ---- Guest (unregistered) view: barcode-only lookup + image scan ----
+// ---- Guest (unregistered) view: login wall ----
 function ZeKasherGuest({ onNav }) {
-  const { t, lang } = useLang();
+  const { t } = useLang();
   const { openAuth } = useAuth();
   const z = t.zekasher;
-  const [mode, setMode] = useZkState(null); // null | "scan" | "type"
-  const [code, setCode] = useZkState("");
-  const [searched, setSearched] = useZkState(false);
-  const [loading, setLoading] = useZkState(false);
-  const [results, setResults] = useZkState(null); // null=not searched, []=not found, [...]=found
-  const [scanning, setScanning] = useZkState(false);
-  const [scanMsg, setScanMsg] = useZkState("");
-  const fileRef = useZkRef(null);
-
-  const lookup = async (codeArg) => {
-    const c = String(codeArg != null ? codeArg : code).trim();
-    if (!c) return;
-    setSearched(true);
-    setLoading(true);
-    setScanMsg("");
-    const found = await lookupBarcode(c);
-    setResults(found);
-    setLoading(false);
-  };
-
-  const activateScan = () => {
-    if (!("BarcodeDetector" in window) && !/iPhone|iPad|Android/i.test(navigator.userAgent)) {
-      setScanMsg(z.guestLandingCameraUnsupported);
-      setMode("type");
-      return;
-    }
-    setMode("scan");
-    setScanMsg("");
-    if (fileRef.current) fileRef.current.click();
-  };
-
-  const onFile = async (e) => {
-    const file = e.target.files && e.target.files[0];
-    e.target.value = "";
-    if (!file) return;
-    if (!("BarcodeDetector" in window)) { setScanMsg(z.scanUnsupported); return; }
-    setScanning(true);
-    setScanMsg("");
-    try {
-      let formats;
-      try { formats = await window.BarcodeDetector.getSupportedFormats(); } catch (_) {}
-      const detector = new window.BarcodeDetector(formats?.length ? { formats } : undefined);
-      const bmp = await createImageBitmap(file);
-      const codes = await detector.detect(bmp);
-      if (bmp.close) bmp.close();
-      if (codes?.length) {
-        const val = codes[0].rawValue;
-        setCode(val);
-        lookup(val);
-      } else {
-        setScanMsg(z.scanNotFound);
-      }
-    } catch {
-      setScanMsg(z.scanNotFound);
-    } finally {
-      setScanning(false);
-    }
-  };
-
-  const reset = () => { setMode(null); setCode(""); setResults(null); setSearched(false); setScanMsg(""); };
-
+  const auth = t.auth;
   return (
     <React.Fragment>
       <section className="zk-hero">
@@ -420,93 +371,17 @@ function ZeKasherGuest({ onNav }) {
       </section>
 
       <section className="wrap zk-results">
-        <div className="zk-guest">
-
-          {/* ── 3-option landing ───────────────────────── */}
-          <div className="zk-landing-grid">
-            <button className={"zk-landing-card" + (mode === "scan" ? " active" : "")}
-                    onClick={activateScan} disabled={scanning}>
-              <span className="zk-landing-ic">{scanning ? <span className="zk-spinner" /> : Icons.camera}</span>
-              <b>{z.scanCta}</b>
-              <span>{z.scanCtaSub}</span>
-            </button>
-
-            <button className={"zk-landing-card" + (mode === "type" ? " active" : "")}
-                    onClick={() => { setMode("type"); setScanMsg(""); }}>
-              <span className="zk-landing-ic">{Icons.barcode}</span>
-              <b>{z.typeCta}</b>
-              <span>{z.typeCtaSub}</span>
-            </button>
-
-            <button className="zk-landing-card zk-landing-card--browse"
-                    onClick={() => openAuth("register")}>
-              <span className="zk-landing-ic">{Icons.search}</span>
-              <b>{z.browseCta}</b>
-              <span>{z.browseCtaSub}</span>
-              <span className="zk-landing-lock">{Icons.lock}</span>
-            </button>
-          </div>
-
-          {/* ── type-barcode input (shown when mode=type or scan found something) ── */}
-          {mode === "type" && (
-            <div className="zk-guest-card">
-              <div className="zk-guest-search">
-                <span className="zk-guest-bc">{Icons.barcode}</span>
-                <input value={code} inputMode="numeric" dir="ltr" autoFocus
-                       placeholder={z.barcodePlaceholder}
-                       onChange={(e) => setCode(e.target.value)}
-                       onKeyDown={(e) => { if (e.key === "Enter") lookup(); }} />
-                <Button kind="primary" sm onClick={() => lookup()} disabled={!code.trim()}>
-                  {z.lookupBtn}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {scanMsg && <div className="zk-scan-msg">{Icons.info}{scanMsg}</div>}
-
-          <input ref={fileRef} type="file" accept="image/*" capture="environment"
-                 style={{ display: "none" }} onChange={onFile} />
-
-          {/* ── results ─────────────────────────────────── */}
-          {searched && (
-            <div className="zk-guest-res">
-              {loading ? (
-                <div className="zk-loading"><span className="zk-spinner" />{lang === "he" ? "מחפש…" : "Searching…"}</div>
-              ) : results === null || results === undefined ? (
-                <div className="zk-empty">
-                  <div className="ic">{Icons.info}</div>
-                  <h3>{z.empty}</h3><p>{z.emptySub}</p>
-                </div>
-              ) : results.length === 0 ? (
-                <div className="zk-empty">
-                  <div className="ic">{Icons.search}</div>
-                  <h3>{z.notFoundTitle}</h3>
-                  <p>{z.notFoundSub}</p>
-                  <button className="zk-reset-link" onClick={reset}>{lang === "he" ? "חיפוש חדש" : "New search"}</button>
-                </div>
-              ) : (
-                <React.Fragment>
-                  <div className="zk-results-head">
-                    <h2>{z.guestFound} <span style={{ color: "var(--gok-green)" }}>({results.length})</span></h2>
-                    <button className="zk-reset-link" onClick={reset}>{lang === "he" ? "חיפוש חדש" : "New search"}</button>
-                  </div>
-                  <div className="zk-grid">
-                    {results.map((p) => <ProductCard key={p.id || p.barcode} p={p} />)}
-                  </div>
-                </React.Fragment>
-              )}
-            </div>
-          )}
-
-          {/* ── registration prompt ──────────────────────── */}
-          <div className="zk-locked">
-            <span className="zk-locked-ic">{Icons.lock}</span>
-            <div className="zk-locked-copy">
-              <b>{z.guestTitle}</b>
-              <span>{z.lockedFull}</span>
-            </div>
-            <Button kind="lime" icon={Icons.user} onClick={() => openAuth("register")}>{z.registerCta}</Button>
+        <div className="zk-auth-wall">
+          <span className="zk-auth-wall-ic">{Icons.lock}</span>
+          <h2>{z.guestTitle}</h2>
+          <p>{z.guestSub}</p>
+          <div className="zk-auth-wall-btns">
+            <Button kind="lime" icon={Icons.user} onClick={() => openAuth("register")}>
+              {auth.register}
+            </Button>
+            <Button kind="outline" onClick={() => openAuth("signin")}>
+              {auth.signin}
+            </Button>
           </div>
         </div>
       </section>
