@@ -95,7 +95,7 @@ function CountrySheet({ open, onClose, country, setCountry }) {
           <input className="country-filter-input"
                  placeholder={lang === "he" ? "חיפוש מדינה…" : "Search country…"}
                  value={filter} onChange={(e) => setFilter(e.target.value)} />
-          <div className="fopts">
+          <div className="fopts fopts--countries">
             {filtered.map((c) => (
               <button key={c.code} className={"fopt" + (country === c.code ? " on" : "")}
                       onClick={() => { setCountry(c.code); onClose(); }}>

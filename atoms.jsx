@@ -36,7 +36,7 @@ const Icons = {
   user: <Icon paths={["M20 21a8 8 0 1 0-16 0", "M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"]} />,
   logout: <Icon paths={["M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4", "M16 17l5-5-5-5", "M21 12H9"]} />,
   camera: <Icon paths={["M14.5 4h-5L8 6H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-4l-1.5-2Z", "M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"]} stroke={1.7} />,
-  barcode: <Icon paths={["M3 5v14", "M7 5v14", "M11 5v14", "M15 5v14", "M19 5v14"]} stroke={1.7} />,
+  barcode: <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" width="24" height="24"><rect x="2" y="4" width="2" height="16"/><rect x="5.5" y="4" width="1" height="16"/><rect x="7.5" y="4" width="2.5" height="16"/><rect x="11" y="4" width="1" height="16"/><rect x="13.5" y="4" width="2" height="16"/><rect x="16.5" y="4" width="1" height="16"/><rect x="18.5" y="4" width="1.5" height="16"/><rect x="21" y="4" width="1" height="16"/></svg>,
   lock: <Icon paths={["M5 11h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1Z", "M8 11V7a4 4 0 0 1 8 0v4"]} />,
   whatsapp: <Icon paths={["M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 21l2.1-5.4A8.5 8.5 0 1 1 21 11.5Z", "M8.5 8.8c.2-.5.4-.5.7-.5h.5c.2 0 .4 0 .6.5l.7 1.6c.1.2 0 .4-.1.5l-.4.5c-.2.2-.2.3-.1.5.3.6.9 1.3 1.6 1.7.2.1.4.1.5-.1l.5-.5c.1-.2.3-.2.5-.1l1.5.7c.3.1.4.3.4.5 0 .6-.4 1.2-1 1.3-.6.1-1.2.1-2.6-.5-1.7-.7-2.9-2.3-3-2.5-.1-.2-.8-1.1-.8-2.1 0-1 .5-1.5.7-1.7Z"]} stroke={1.6} />,
 };
