@@ -188,6 +188,8 @@ button:focus:not(:focus-visible),a:focus:not(:focus-visible){outline:none}
 .zk-country-btn svg{width:14px;height:14px;opacity:.75}
 .zk-country-label{font-size:13px;font-weight:500;opacity:.75;margin-inline-end:2px}
 .zk-country-nudge{font-size:13px;color:rgba(255,255,255,.65);margin-top:8px;padding-inline-start:6px}
+.country-filter-input{width:100%;border:1.5px solid var(--gok-mist);border-radius:var(--r-pill);padding:10px 16px;font-size:15px;color:var(--gok-ink);outline:none;margin-bottom:14px;box-sizing:border-box}
+.country-filter-input:focus{border-color:var(--gok-green)}
 
 /* search controls */
 .zk-tools{position:relative;z-index:2;margin-top:16px}
@@ -239,7 +241,7 @@ button:focus:not(:focus-visible),a:focus:not(:focus-visible){outline:none}
 .kbadge{font-weight:700;font-size:14px;padding:5px 12px;border-radius:var(--r-pill);line-height:1}
 
 .pcard-body{background:#fff;border:1px solid rgba(35,79,71,.14);border-radius:8px;padding:10px;display:flex;gap:12px;align-items:center}
-.pcard-info{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center}
+.pcard-info{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:5px;text-align:start}
 .pcard-brand{display:inline-block;background:var(--gok-green);color:#fff;font-weight:700;font-size:14px;padding:3px 10px;border-radius:5px;letter-spacing:-.01em}
 .pcard-names{line-height:1.2}
 .pcard-names .he{font-weight:700;font-size:17px;color:var(--gok-ink);letter-spacing:-.01em}
@@ -250,6 +252,7 @@ button:focus:not(:focus-visible),a:focus:not(:focus-visible){outline:none}
 .pcard-img .ph-brand{position:absolute;bottom:6px;left:0;right:0;text-align:center;font-size:9px;font-weight:700;letter-spacing:.04em;color:rgba(255,255,255,.9);text-transform:uppercase}
 .pcard-warn{display:flex;align-items:center;justify-content:center;gap:6px;color:var(--gok-danger-2);font-weight:700;font-size:13.5px;text-align:center;padding:0 4px}
 .pcard-warn svg{width:15px;height:15px;flex-shrink:0}
+.pcard-warn--global{margin-bottom:14px;justify-content:flex-start;background:rgba(220,38,38,.06);border-radius:8px;padding:10px 14px;font-weight:600;font-size:13px}
 
 /* empty state */
 .zk-empty{text-align:center;padding:40px 20px;background:#fff;border-radius:var(--r-lg);box-shadow:var(--shadow-sm)}

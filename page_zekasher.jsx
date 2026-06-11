@@ -70,7 +70,6 @@ function ProductCard({ p, mini, onFav, faved }) {
             : <React.Fragment><CatGlyph cat={p.cat} /><span className="ph-brand">{p.brand}</span></React.Fragment>}
         </div>
       </div>
-      {!isUnhandled && <div className="pcard-warn">{Icons.info}{z.warning}</div>}
     </div>
   );
 }
@@ -78,6 +77,12 @@ function ProductCard({ p, mini, onFav, faved }) {
 // ---- country picker bottom-sheet ----
 function CountrySheet({ open, onClose, country, setCountry }) {
   const { t, lang } = useLang();
+  const [filter, setFilter] = React.useState("");
+  React.useEffect(() => { if (!open) setFilter(""); }, [open]);
+  const q = filter.trim().toLowerCase();
+  const filtered = q
+    ? COUNTRIES.filter((c) => c.he.includes(filter.trim()) || c.en.toLowerCase().includes(q) || c.code.toLowerCase() === q)
+    : COUNTRIES;
   return (
     <React.Fragment>
       <div className={"sheet-scrim" + (open ? " open" : "")} onClick={onClose} />
@@ -87,13 +92,21 @@ function CountrySheet({ open, onClose, country, setCountry }) {
           <button onClick={onClose} aria-label="close">{Icons.x}</button>
         </div>
         <div className="sheet-body">
+          <input className="country-filter-input"
+                 placeholder={lang === "he" ? "חיפוש מדינה…" : "Search country…"}
+                 value={filter} onChange={(e) => setFilter(e.target.value)} />
           <div className="fopts">
-            {COUNTRIES.map((c) => (
+            {filtered.map((c) => (
               <button key={c.code} className={"fopt" + (country === c.code ? " on" : "")}
                       onClick={() => { setCountry(c.code); onClose(); }}>
                 <span className="flag">{c.flag}</span>{lang === "he" ? c.he : c.en}
               </button>
             ))}
+            {filtered.length === 0 && (
+              <p style={{ fontSize: 14, color: "var(--gok-ink-3)", padding: "12px 4px" }}>
+                {lang === "he" ? "לא נמצאה מדינה" : "No country found"}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -248,13 +261,20 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
             <div className="ic">{Icons.search}</div>
             <h3>{t.zekasher.emptyApproved}</h3>
             <p>{t.zekasher.emptyApprovedSub}</p>
+            <button className="zk-reset-link"
+                    onClick={() => { setQ(""); setCommittedQ(""); setKosher("all"); setCat("all"); setCountry("all"); }}>
+              {lang === "he" ? "נקה חיפוש" : "Clear search"}
+            </button>
           </div>
         ) : (
-          <div className={"zk-grid" + (zkView === "list" ? " list" : "")}>
-            {res.items.map((p) => (
-              <ProductCard key={p.id} p={p} onFav={toggleFav} faved={favs[p.id]} />
-            ))}
-          </div>
+          <React.Fragment>
+            <div className="pcard-warn pcard-warn--global">{Icons.info}{t.zekasher.warning}</div>
+            <div className={"zk-grid" + (zkView === "list" ? " list" : "")}>
+              {res.items.map((p) => (
+                <ProductCard key={p.id} p={p} onFav={toggleFav} faved={favs[p.id]} />
+              ))}
+            </div>
+          </React.Fragment>
         )}
       </section>
 
