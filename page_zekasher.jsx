@@ -189,11 +189,34 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
     });
   }, [committedQ, country, kosher, cat, lang]);
 
+  const [scanning, setScanning] = useZkState(false);
+  const fileRef = useZkRef(null);
+
   const commitSearch = () => setCommittedQ(q);
   const toggleFav = (id) => setFavs((f) => ({ ...f, [id]: !f[id] }));
   const activeFilters = (kosher !== "all" ? 1 : 0) + (cat !== "all" ? 1 : 0);
   const sel = countryByCode(country);
-  const kt = t.zekasher.kosherTypes;
+
+  const activateScan = () => {
+    if (!("BarcodeDetector" in window) && !/iPhone|iPad|Android/i.test(navigator.userAgent)) return;
+    if (fileRef.current) fileRef.current.click();
+  };
+
+  const onScanFile = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file || !("BarcodeDetector" in window)) return;
+    setScanning(true);
+    try {
+      let formats;
+      try { formats = await window.BarcodeDetector.getSupportedFormats(); } catch (_) {}
+      const detector = new window.BarcodeDetector(formats?.length ? { formats } : undefined);
+      const bmp = await createImageBitmap(file);
+      const codes = await detector.detect(bmp);
+      if (bmp.close) bmp.close();
+      if (codes?.length) { const val = codes[0].rawValue; setQ(val); setCommittedQ(val); }
+    } catch {} finally { setScanning(false); }
+  };
 
   return (
     <React.Fragment>
@@ -226,7 +249,9 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
               {q ? (
                 <button className="scan" aria-label="clear" onClick={() => { setQ(""); setCommittedQ(""); }}>{Icons.x}</button>
               ) : (
-                <button className="scan" aria-label="scan barcode" title="Scan">{Icons.scan}</button>
+                <button className="scan" aria-label="scan barcode" onClick={activateScan} disabled={scanning}>
+                  {scanning ? <span className="zk-spinner" style={{width:18,height:18,borderWidth:2}} /> : Icons.scan}
+                </button>
               )}
             </div>
             <div className="zk-filterrow">
@@ -234,10 +259,18 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
                 {Icons.filter}{t.zekasher.filter}
                 {activeFilters > 0 && <span className="count-dot">{activeFilters}</span>}
               </button>
-              {["all", "milk", "meat", "pareve", "passover"].map((k) => (
-                <button key={k} className={"zk-chip" + (kosher === k ? " on" : "")}
-                        onClick={() => setKosher(k)}>{kt[k]}</button>
-              ))}
+              {kosher !== "all" && (
+                <button className="zk-chip on" onClick={() => setKosher("all")}>
+                  {t.zekasher.kosherTypes[kosher]}{Icons.x}
+                </button>
+              )}
+              {cat !== "all" && (
+                <button className="zk-chip on" onClick={() => setCat("all")}>
+                  {(CATEGORIES.find((c) => c.id === cat) || {}).icon}{" "}
+                  {lang === "he" ? (CATEGORIES.find((c) => c.id === cat) || {}).he : (CATEGORIES.find((c) => c.id === cat) || {}).en}
+                  {Icons.x}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -303,6 +336,8 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
         cat={cat} setCat={setCat} onApply={() => setSheet(false)} />
       <CountrySheet open={countrySheet} onClose={() => setCountrySheet(false)}
         country={country} setCountry={setCountry} />
+      <input ref={fileRef} type="file" accept="image/*" capture="environment"
+             style={{display:"none"}} onChange={onScanFile} />
     </React.Fragment>
   );
 }
