@@ -288,6 +288,14 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
       </section>
 
       <section className="wrap zk-results">
+        <div className="zk-cat-strip">
+          {QUICK_CATS.map((c) => (
+            <button key={c.id} className={"zk-cat-chip" + (cat === c.id ? " on" : "")}
+                    onClick={() => setCat(cat === c.id ? "all" : c.id)}>
+              <span>{c.icon}</span>{lang === "he" ? c.he : c.en}
+            </button>
+          ))}
+        </div>
         <div className="zk-results-head">
           <h2>
             {t.zekasher.resultsAll}{" "}

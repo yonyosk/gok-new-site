@@ -224,6 +224,16 @@ const CATEGORIES = [
   { id: "e2a45cc3-85b7-4755-a24f-c3cbea3327d6", icon: "🍗", he: "מוצרי בשר עופות", en: "Meat & poultry products" },
 ];
 
+const QUICK_CATS = [
+  "77a1c67e-a139-4710-ab74-7619aafa916c",
+  "b04abc2c-6f7c-411a-ba0f-139e9b760383",
+  "825f22c6-6038-4b7e-998b-2b30dbc338d2",
+  "5672c83e-8350-41ad-b349-9c91e71cc317",
+  "9ace2388-35a7-427c-8610-959dc77fdbb7",
+  "5086fa4a-fdcb-4055-ad7f-8a1b6a5cbb30",
+  "fa7452f8-81cb-4891-885f-0a7ada03760e",
+].map((id) => CATEGORIES.find((c) => c.id === id)).filter(Boolean);
+
 // kosher: milk | meat | pareve | passover (a product can be pareve + passover etc.)
 const PRODUCTS = [
   { id: 1, brand: "Swiss Premium", he: "חלב מפוסטר 3%", en: "Whole Milk 3% – 1L", cat: "dairy", kosher: ["milk"], cert: "בד״ץ אנטוורפן", certEn: "Badatz Antwerp", barcode: "019283746", countries: ["ch", "de", "fr"], tone: "#3F6FB5" },
@@ -498,4 +508,4 @@ const HOME_FAQ = {
   ],
 };
 
-Object.assign(window, { COUNTRIES, CATEGORIES, countryByCode, PRODUCTS, searchProducts, lookupBarcode, fetchAvailableCountries, ARTICLES, ARTICLE_BODY, HOME_UPDATES, HOME_QA, HOME_FAQ });
+Object.assign(window, { COUNTRIES, CATEGORIES, QUICK_CATS, countryByCode, PRODUCTS, searchProducts, lookupBarcode, fetchAvailableCountries, ARTICLES, ARTICLE_BODY, HOME_UPDATES, HOME_QA, HOME_FAQ });

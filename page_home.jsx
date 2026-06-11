@@ -38,13 +38,12 @@ function HomeHero({ onNav }) {
           <h1>{t.home.h1}</h1>
           <p className="hh-sub">{t.home.sub}</p>
           <div className="hh-chat">
-            <span>{t.home.chatPrompt}</span>
             <div className="hh-cta-row">
-              <Button kind="outline" lg icon={Icons.chat} onClick={() => onNav("zekasher")}>
-                {t.home.chatCta}
-              </Button>
               <Button kind="primary" lg icon={Icons.search} onClick={() => onNav("zekasher")}>
                 {t.cta.search}
+              </Button>
+              <Button kind="outline" lg icon={Icons.arrow} onClick={() => onNav("guide")}>
+                {t.nav.guide}
               </Button>
             </div>
           </div>
