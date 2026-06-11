@@ -110,32 +110,6 @@ function AboutBlock({ onNav }) {
   );
 }
 
-// ── 3 · AI CHAT ASSISTANT ────────────────────────────────────────────
-function ChatAssistant({ onNav }) {
-  const { t } = useLang();
-  return (
-    <section className="section chat-section">
-      <div className="wrap">
-        <div className="chat-card">
-          <Sparkle tone="green" className="chat-spk" />
-          <h2 className="chat-title">{t.home.chatTitle}</h2>
-          <div className="chat-input">
-            <span className="chat-send">{Icons.send}</span>
-            <span className="chat-ph">{t.home.chatPlaceholder}</span>
-          </div>
-          <div className="chat-chips">
-            {t.home.chatChips.map((c) => (
-              <button className="chat-chip" key={c} onClick={() => onNav("zekasher")}>
-                {Icons.chat}{c}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 // ── 4 · SOLUTIONS (tabs + alternating rows) ──────────────────────────
 function SolutionRow({ sol, idx, onNav }) {
   const { t } = useLang();
@@ -316,7 +290,6 @@ function HomePage({ onNav, tweaks }) {
       <HomeHero onNav={onNav} />
       <TrustStats />
       <AboutBlock onNav={onNav} />
-      <ChatAssistant onNav={onNav} />
       <Solutions onNav={onNav} />
       <Updates onNav={onNav} />
       <QASection onNav={onNav} />

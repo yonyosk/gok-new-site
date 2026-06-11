@@ -322,26 +322,6 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
         )}
       </section>
 
-      <section className="section">
-        <div className="wrap">
-          <div className="zk-phone-promo">
-            <div className="dots" />
-            <div className="zk-phone-in">
-              <PhoneMock />
-              <div className="zk-phone-copy">
-                <Eyebrow onDark tone="lime">{t.zekasher.tryPhone}</Eyebrow>
-                <h2>ZeKasher</h2>
-                <p>{t.zekasher.phoneNote}</p>
-                <div className="store-row">
-                  <Button kind="lime" icon={Icons.arrow}>App Store</Button>
-                  <Button kind="ghost-light" icon={Icons.arrow}>Google Play</Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <FilterSheet open={sheet} onClose={() => setSheet(false)}
         kosher={kosher} setKosher={setKosher}
         cat={cat} setCat={setCat} onApply={() => setSheet(false)} />
@@ -386,25 +366,6 @@ function ZeKasherGuest({ onNav }) {
         </div>
       </section>
 
-      <section className="section">
-        <div className="wrap">
-          <div className="zk-phone-promo">
-            <div className="dots" />
-            <div className="zk-phone-in">
-              <PhoneMock />
-              <div className="zk-phone-copy">
-                <Eyebrow onDark tone="lime">{z.tryPhone}</Eyebrow>
-                <h2>ZeKasher</h2>
-                <p>{z.phoneNote}</p>
-                <div className="store-row">
-                  <Button kind="lime" icon={Icons.arrow}>App Store</Button>
-                  <Button kind="ghost-light" icon={Icons.arrow}>Google Play</Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
     </React.Fragment>
   );
 }
