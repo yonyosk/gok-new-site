@@ -253,7 +253,7 @@ function FAQ({ onNav }) {
                 <span className="faq-chev">{Icons.chevD}</span>
                 <span>{q}</span>
               </button>
-              <div className="faq-a" id={"faq-body-home-" + i} role="region"><p>{a}</p></div>
+              <div className="faq-a" id={"faq-body-home-" + i} role="region" aria-hidden={open !== i}><p>{a}</p></div>
             </div>
           ))}
         </div>

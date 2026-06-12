@@ -1,6 +1,20 @@
 // GOK site — ZeKasher product search (desktop layout + interactive search + phone mockup).
 const { useState: useZkState, useEffect: useZkEffect, useRef: useZkRef } = React;
 
+// maps API category UUIDs to the string keys used by CatGlyph
+const CAT_SLUG = {
+  "b04abc2c-6f7c-411a-ba0f-139e9b760383": "dairy",
+  "696d94c1-b76b-4e03-8839-d45133335923": "dairy",
+  "77a1c67e-a139-4710-ab74-7619aafa916c": "meat",
+  "1fede1c9-9058-4d51-ad26-f013a54ea610": "meat",
+  "e2a45cc3-85b7-4755-a24f-c3cbea3327d6": "meat",
+  "040c1b31-0aa8-4f7c-b2fb-f2e9cb4a0042": "bakery",
+  "825f22c6-6038-4b7e-998b-2b30dbc338d2": "bakery",
+  "5672c83e-8350-41ad-b349-9c91e71cc317": "snacks",
+  "a85b5fb5-c1e4-46b7-be22-0f10fa2cd5c2": "snacks",
+  "9ace2388-35a7-427c-8610-959dc77fdbb7": "drinks",
+};
+
 // ---- category placeholder glyphs (line icons over a tinted block) ----
 const CatGlyph = ({ cat }) => {
   const P = (paths) => (
@@ -9,7 +23,7 @@ const CatGlyph = ({ cat }) => {
       {paths.map((d, i) => <path key={i} d={d} />)}
     </svg>
   );
-  switch (cat) {
+  switch (CAT_SLUG[cat] || cat) {
     case "dairy":  return P(["M9 2h6", "M9 2v3l-2 3v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V8l-2-3V2", "M7 12h10"]);
     case "meat":   return P(["M3 17a4 4 0 0 0 5 5l2-2 8-8a4 4 0 1 0-5-5l-8 8-2 2Z", "M5 19l-2 2"]);
     case "bakery": return P(["M4 13a4 4 0 0 1 4-4h8a4 4 0 0 1 0 8H8a4 4 0 0 1-4-4Z", "M8 9V7M12 9V7M16 9V7"]);
@@ -50,7 +64,9 @@ function ProductCard({ p, mini, onFav, faved }) {
             ))}
           </div>
           {!mini && (
-            <button className={"pcard-fav" + (faved ? " on" : "")} aria-label="favorite"
+            <button className={"pcard-fav" + (faved ? " on" : "")}
+                    aria-label={faved ? (lang === "he" ? "הסר ממועדפים" : "Remove from favourites") : (lang === "he" ? "הוסף למועדפים" : "Add to favourites")}
+                    aria-pressed={!!faved}
                     onClick={() => onFav && onFav(p.id)}>{Icons.heart}</button>
           )}
         </div>
@@ -196,19 +212,21 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
     searchProducts({ q: committedQ, approved_only: true, country, kosher, cat, limit }, lang).then((r) => {
       if (id === reqId.current) { setRes(r); setLoading(false); }
     });
-  }, [committedQ, country, kosher, cat, lang]);
+  }, [committedQ, country, kosher, cat]);
 
   const [scanning, setScanning] = useZkState(false);
+  const [warnDismissed, setWarnDismissed] = useZkState(() => !!sessionStorage.getItem("zk-warn-ok"));
   const fileRef = useZkRef(null);
 
   const commitSearch = () => setCommittedQ(q);
+  const dismissWarn = () => { sessionStorage.setItem("zk-warn-ok", "1"); setWarnDismissed(true); };
   const toggleFav = (id) => setFavs((f) => ({ ...f, [id]: !f[id] }));
   const activeFilters = (kosher !== "all" ? 1 : 0) + (cat !== "all" ? 1 : 0);
   const sel = countryByCode(country);
 
   const activateScan = () => {
-    if (!("BarcodeDetector" in window) && !/iPhone|iPad|Android/i.test(navigator.userAgent)) {
-      setScanWarnMsg(lang === "he" ? "סריקת ברקוד אינה נתמכת בדפדפן זה" : "Barcode scanning is not supported in this browser");
+    if (!("BarcodeDetector" in window)) {
+      setScanWarnMsg(lang === "he" ? "סריקת ברקוד אינה נתמכת בדפדפן זה — נסו ב-Chrome" : "Barcode scanning requires Chrome or Edge");
       return;
     }
     setScanWarnMsg("");
@@ -218,7 +236,11 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
   const onScanFile = async (e) => {
     const file = e.target.files && e.target.files[0];
     e.target.value = "";
-    if (!file || !("BarcodeDetector" in window)) return;
+    if (!file) return;
+    if (!("BarcodeDetector" in window)) {
+      setScanWarnMsg(lang === "he" ? "סריקת ברקוד אינה נתמכת בדפדפן זה — נסו ב-Chrome" : "Barcode scanning requires Chrome or Edge");
+      return;
+    }
     setScanning(true);
     try {
       let formats;
@@ -228,7 +250,9 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
       const codes = await detector.detect(bmp);
       if (bmp.close) bmp.close();
       if (codes?.length) { const val = codes[0].rawValue; setQ(val); setCommittedQ(val); }
-    } catch {} finally { setScanning(false); }
+      else { setScanWarnMsg(lang === "he" ? "לא זוהה ברקוד בתמונה" : "No barcode found in image"); }
+    } catch { setScanWarnMsg(lang === "he" ? "שגיאה בסריקה — נסו שוב" : "Scan failed — please try again"); }
+    finally { setScanning(false); }
   };
 
   return (
@@ -323,7 +347,8 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
           </div>
         ) : browseMode ? (
           <React.Fragment>
-            <div className="pcard-warn pcard-warn--global">{Icons.info}{t.zekasher.warning}</div>
+            {res.isSampleData && <div className="zk-demo-banner">{Icons.info}{lang === "he" ? "מציג נתוני דוגמה — לא ניתן להתחבר ל-API" : "Showing demo data — API connection failed"}</div>}
+            {!warnDismissed && <div className="pcard-warn pcard-warn--global">{Icons.info}{t.zekasher.warning}<button className="pcard-warn-close" onClick={dismissWarn} aria-label={lang === "he" ? "סגור" : "Close"}>{Icons.x}</button></div>}
             {(() => {
               const grouped = {};
               res.items.forEach((p) => { const k = p.cat || "other"; (grouped[k] = grouped[k] || []).push(p); });
@@ -345,7 +370,8 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
           </React.Fragment>
         ) : (
           <React.Fragment>
-            <div className="pcard-warn pcard-warn--global">{Icons.info}{t.zekasher.warning}</div>
+            {res.isSampleData && <div className="zk-demo-banner">{Icons.info}{lang === "he" ? "מציג נתוני דוגמה — לא ניתן להתחבר ל-API" : "Showing demo data — API connection failed"}</div>}
+            {!warnDismissed && <div className="pcard-warn pcard-warn--global">{Icons.info}{t.zekasher.warning}<button className="pcard-warn-close" onClick={dismissWarn} aria-label={lang === "he" ? "סגור" : "Close"}>{Icons.x}</button></div>}
             <div className={"zk-grid" + (zkView === "list" ? " list" : "")}>
               {res.items.map((p) => (
                 <ProductCard key={p.id} p={p} onFav={toggleFav} faved={favs[p.id]} />

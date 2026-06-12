@@ -340,7 +340,7 @@ const mapApiProduct = (r) => ({
   brand: r.brand_name || "",
   he: r.name_he || r.canonical_name || "",
   en: r.name_en || r.canonical_name || "",
-  cat: r.category_id || "",
+  cat: r.category_id || null,
   kosher: [],
   cert: "",
   certEn: "",
@@ -361,11 +361,11 @@ async function searchProducts(params = {}, lang = "he") {
     const resp = await apiFetch(`${API_BASE}/products/search?${qs}`);
     if (!resp || !resp.ok) throw new Error(`API ${resp?.status}`);
     const json = await resp.json();
-    return { items: (json.items || []).map(mapApiProduct), total: json.total || 0, hasMore: json.has_more || false };
+    return { items: (json.items || []).map(mapApiProduct), total: json.total || 0, hasMore: json.has_more || false, isSampleData: false };
   } catch (err) {
     console.warn("[ZeKasher] search API failed, using sample data:", err);
     const items = PRODUCTS.filter((p) => matchProduct(p, params, lang));
-    return { items, total: items.length, hasMore: false };
+    return { items, total: items.length, hasMore: false, isSampleData: true };
   }
 }
 
@@ -397,7 +397,7 @@ async function fetchAvailableCountries() {
     if (!Array.isArray(items) || items.length === 0) throw new Error("empty");
     const codes = new Set(
       items
-        .filter((c) => (c.count || c.total || c.product_count || 999) >= 100)
+        .filter((c) => (c.count || c.total || c.product_count || 0) >= 100)
         .map((c) => (c.country_code || c.code || "").toUpperCase())
         .filter(Boolean)
     );
