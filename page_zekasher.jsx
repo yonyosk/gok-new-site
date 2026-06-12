@@ -187,10 +187,13 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
     fetchAvailableCountries().then(setCountryList);
   }, []);
 
+  const browseMode = country !== "all" && !committedQ && cat === "all" && kosher === "all";
+
   useZkEffect(() => {
     const id = ++reqId.current;
     setLoading(true);
-    searchProducts({ q: committedQ, approved_only: true, country, kosher, cat }, lang).then((r) => {
+    const limit = browseMode ? 100 : 20;
+    searchProducts({ q: committedQ, approved_only: true, country, kosher, cat, limit }, lang).then((r) => {
       if (id === reqId.current) { setRes(r); setLoading(false); }
     });
   }, [committedQ, country, kosher, cat, lang]);
@@ -318,6 +321,28 @@ function ZeKasherFull({ initialQuery, initialKosher, onNav, zkView = "grid" }) {
               {lang === "he" ? "נקה חיפוש" : "Clear search"}
             </button>
           </div>
+        ) : browseMode ? (
+          <React.Fragment>
+            <div className="pcard-warn pcard-warn--global">{Icons.info}{t.zekasher.warning}</div>
+            {(() => {
+              const grouped = {};
+              res.items.forEach((p) => { const k = p.cat || "other"; (grouped[k] = grouped[k] || []).push(p); });
+              const sections = CATEGORIES.filter((c) => grouped[c.id]);
+              if (grouped.other) sections.push({ id: "other", icon: "📦", he: "אחר", en: "Other" });
+              return sections.map((c) => (
+                <div key={c.id} className="zk-cat-section">
+                  <div className="zk-cat-section-head">
+                    <span>{c.icon}</span>
+                    <h3>{lang === "he" ? c.he : c.en}</h3>
+                    <span className="muted">({grouped[c.id].length})</span>
+                  </div>
+                  <div className="zk-grid">
+                    {grouped[c.id].map((p) => <ProductCard key={p.id} p={p} onFav={toggleFav} faved={favs[p.id]} />)}
+                  </div>
+                </div>
+              ));
+            })()}
+          </React.Fragment>
         ) : (
           <React.Fragment>
             <div className="pcard-warn pcard-warn--global">{Icons.info}{t.zekasher.warning}</div>

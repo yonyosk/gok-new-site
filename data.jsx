@@ -340,7 +340,7 @@ const mapApiProduct = (r) => ({
   brand: r.brand_name || "",
   he: r.name_he || r.canonical_name || "",
   en: r.name_en || r.canonical_name || "",
-  cat: "",
+  cat: r.category_id || "",
   kosher: [],
   cert: "",
   certEn: "",
@@ -353,8 +353,9 @@ const mapApiProduct = (r) => ({
 
 async function searchProducts(params = {}, lang = "he") {
   try {
-    const qs = new URLSearchParams({ q: params.q || "", limit: 20, skip: params.skip || 0 });
-    if (params.country && params.country !== "all") qs.set("country_code", params.country);
+    const qs = new URLSearchParams({ limit: params.limit || 20, skip: params.skip || 0 });
+    if (params.q) qs.set("q", params.q);
+    if (params.country && params.country !== "all") qs.set("country", params.country);
     if (params.cat && params.cat !== "all") qs.set("category_id", params.cat);
     if (params.approved_only) qs.set("approved_only", "true");
     const resp = await apiFetch(`${API_BASE}/products/search?${qs}`);
